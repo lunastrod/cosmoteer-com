@@ -12,10 +12,14 @@
 # FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import json
+# modified by LunastroD (I made this a library and removed the dependency on json because I'm reading the data directly)
+SHIP="ships/Sion.ship.png"
+JSON_ON=0
+if(JSON_ON):
+    import json
+
 from PIL import Image
 import numpy as np
-import pathlib
 import gzip
 import struct
 import enum
@@ -283,14 +287,18 @@ class Ship():
         else:
             raise TypeError(f"Unknown datatype: {type(data_node)}")
 
-class JSONEncoderWithBytes(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, bytes):
-            # any bytes that could not be decoded, will be decoded using latin1 and then
-            # wrapped in a special dictionary:
-            return {'__bytes__': obj.decode('latin1')}
-        return json.JSONEncoder.default(self, obj)
+if(JSON_ON):
+    class JSONEncoderWithBytes(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, bytes):
+                # any bytes that could not be decoded, will be decoded using latin1 and then
+                # wrapped in a special dictionary:
+                return {'__bytes__': obj.decode('latin1')}
+            return json.JSONEncoder.default(self, obj)
     
 if(__name__ == "__main__"):
-    with open("out.json", "w") as f:
-        json.dump(Ship("This_ship_WILL_crash_your_game..ship.png").data, f, cls = JSONEncoderWithBytes)
+    if(JSON_ON):
+        with open("out.json", "w") as f:
+            json.dump(Ship("This_ship_WILL_crash_your_game..ship.png").data, f, cls = JSONEncoderWithBytes)
+    else:
+        print(Ship(SHIP).data)
