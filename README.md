@@ -8,3 +8,5 @@ Read the instructions inside com.py and execute it.
 
 Dependencies:
 pip install pillow numpy gzip
+
+pip install opencv-python (optional)
