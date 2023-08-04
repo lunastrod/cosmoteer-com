@@ -15,7 +15,7 @@
 # INSTRUCTIONS:
 # move your ship.png to the ships folder
 # change the SHIP variable to the name of your ship.png
-# if you have opencv and numpy installed, set GRAPHICS to 1 to draw your ship
+# if you have opencv installed, set GRAPHICS to 1 to draw your ship
 #   the center of mass of your ship will be drawn as a green circle
 #   if you can't see the window, the image will be saved as out.png
 # otherwise, set GRAPHICS to 0 to use an ascii representation of your ship
