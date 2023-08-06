@@ -4,7 +4,7 @@ from discord.ext import commands
 import center_of_mass
 
 intents = discord.Intents.default()
-intents.message_content = True
+intents.messages = True
 
 bot = commands.Bot(command_prefix='!!', intents=intents)
 
