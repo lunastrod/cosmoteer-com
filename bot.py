@@ -14,6 +14,7 @@ short_version_text="Made by LunastroD, Aug 2023"
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Cosmoteer (!!help)"))
+    print("Bot is ready")
 
 @bot.command(brief='Calculates the center of mass of cosmoteer ships', description='Calculates the center of mass of cosmoteer ships.\nInstructions:\n\t-send a ship.png\n\t-the center of mass of your ship will be drawn as a green circle\n\t-you can send multiple ships on the same message\n\t-this tool is only a good aproximation of the com, total mass might be a bit off too') #calculate center of mass
 async def com(ctx):
