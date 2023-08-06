@@ -24,7 +24,11 @@ async def com(ctx):
         await ctx.send("Too many ships at once")
     for attachment in ctx.message.attachments:
         await attachment.save('discord_bot\ship.ship.png')
-        data=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")
+        try:
+            data=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")
+        except:
+            await ctx.send("Error: could not process ship")
+            continue
         with open('discord_bot\out.png', 'rb') as f:
             picture = discord.File(f)
             text="Center of mass: " + str(round(data[0],2)) + ", " + str(round(data[1],2)) + "\nTotal mass: " + str(round(data[2],2)) + "t"
