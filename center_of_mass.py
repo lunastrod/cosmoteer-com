@@ -25,7 +25,8 @@ import part_data
 import cosmoteer_save_tools
 GRAPHICS=1 #set to 1 to use opencv to draw ship, 0 to use ascii representation
 DRAW_ALL_COM=0
-SHIP="ships/Sion.ship.png" #set to the name of your ship.png
+WINDOWED=0 #set to 1 to show the opencv window
+SHIP="ships/Nion.ship.png" #set to the name of your ship.png
 if(GRAPHICS==1):
     import cv2
     import numpy as np
@@ -74,7 +75,7 @@ def center_of_mass(parts):
         center_of_mass_x = sum_x_mass / total_mass
         center_of_mass_y = sum_y_mass / total_mass
 
-    return center_of_mass_x, center_of_mass_y
+    return center_of_mass_x, center_of_mass_y, total_mass
 
 def ascii_draw(tiles, parts, com):
     for part in parts:
@@ -98,23 +99,23 @@ def print_tiles(tiles):
             print(tiles[i][j], end="")
         print()
 
-def draw_ship(parts, com):
+def draw_ship(parts, com, output_filename):
     if(GRAPHICS==1):
         print("center of mass: ", com)
-        cvdraw_ship(parts, com)
+        cvdraw_ship(parts, com, output_filename)
     else:
         tiles = [[" " for i in range(120)] for j in range(120)]
         ascii_draw(tiles, parts, com)
         print_tiles(tiles)
         print("center of mass: ", com)
 
-def cvdraw_ship(parts, com):
+def cvdraw_ship(parts, com, output_filename):
     #use opencv to draw ship
-    print("drawing ship")
     #create blank image factor times of the ship
     size_factor = 8
     square_size = round(size_factor)
     img = np.zeros((120*size_factor,120*size_factor,3), np.uint8)
+
     #add parts to image
     for part in parts:
         x_coord = part["Location"][0] +60
@@ -133,12 +134,13 @@ def cvdraw_ship(parts, com):
         rotation=part["Rotation"]
         if(rotation==1 or rotation==3):
             size=(size[1],size[0])
-        #cv2.rectangle(img, (round((x_coord)*size_factor+1), round((y_coord)*size_factor+1)),(round((x_coord+1)*size_factor-1), round((y_coord+1)*size_factor-1)),color, -1)
+            
         for i in range(size[0]):
             for j in range(size[1]):
                 cv2.rectangle(img, (round((x_coord+i)*size_factor+1), round((y_coord+j)*size_factor+1)),
                                 (round((x_coord+i+1)*size_factor-1), round((y_coord+j+1)*size_factor-1)),
                                 color, -1)
+                
     #add center of mass (as a green circle)
     cv2.circle(img, (round((com[0]+60)*size_factor), round((com[1]+60)*size_factor)), square_size, [0,255,0], -1)
     if(DRAW_ALL_COM):
@@ -148,17 +150,23 @@ def cvdraw_ship(parts, com):
             cv2.circle(img, (round((x_coord+60)*size_factor), round((y_coord+60)*size_factor)), 1, [0,255,0], -1)
     
     #save image
-    cv2.imwrite("out.png", img)
+    cv2.imwrite(output_filename, img)
     #show image
-    cv2.imshow("image", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if(WINDOWED):
+        cv2.imshow("image", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
-if(__name__ == "__main__"):
+def com(input_filename, output_filename):
     #read ship.png, extract part data
-    parts=cosmoteer_save_tools.Ship(SHIP).data["Parts"]
+    parts=cosmoteer_save_tools.Ship(input_filename).data["Parts"]
     #calculate center of mass
     com = center_of_mass(parts)
     #draw ship
-    draw_ship(parts, com)
+    draw_ship(parts, com, output_filename)#writes to out.png
+    return com
+
+if(__name__ == "__main__"):
+    com(SHIP, "out.png")
+
 
