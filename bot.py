@@ -7,8 +7,8 @@ intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-version_text="Made by LunastroD, Aug 2023, for the Excelsior discord server and the awesome Cosmoteer community :3\n    -Check out the source code at https://github.com/lunastrod/cosmoteer-com"
 short_version_text="Made by LunastroD, Aug 2023"
+version_text=short_version_text+", for the Excelsior discord server and the awesome Cosmoteer community :3\n    -Check out the source code at https://github.com/lunastrod/cosmoteer-com"
 help_text="""
 /com: Calculates the center of mass of a cosmoteer ship.png
     -the center of mass of your ship will be drawn as a green circle
