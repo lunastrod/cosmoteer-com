@@ -19,7 +19,7 @@ help_text="""
 
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Game(name="Cosmoteer (!!help)"))
+    await client.change_presence(activity=discord.Game(name="Cosmoteer (/help)"))
     print("Syncing slash commands")
     await tree.sync()
     print("Guilds:")
