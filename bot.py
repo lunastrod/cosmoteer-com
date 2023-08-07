@@ -35,10 +35,12 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
     except:
         await interaction.response.send_message("Error: could not process ship")
         return
-    with open('discord_bot\out.png', 'rb') as f:#send the output image
+    with open('discord_bot\out.png', 'rb') as f, open("discord_bot\ship.ship.png", "rb") as s:#send the output image
         picture = discord.File(f)
+        ship = discord.File(s)
+        files_to_send: list[discord.File] = [picture, ship]
         text="Center of mass: " + str(round(data[0],2)) + ", " + str(round(data[1],2)) + "\nTotal mass: " + str(round(data[2],2)) + "t"
-        await interaction.response.send_message(text,file=picture)
+        await interaction.response.send_message(text,files=files_to_send)
 
 @tree.command(name="version", description=short_version_text)
 async def version(interaction: discord.Interaction):
