@@ -25,6 +25,7 @@ import part_data
 import cosmoteer_save_tools
 GRAPHICS=1 #set to 1 to use opencv to draw ship, 0 to use ascii representation
 DRAW_ALL_COM=0
+DRAW_ALL_COT=1
 WINDOWED=0 #set to 1 to show the opencv window
 SHIP="ships/Nion.ship.png" #set to the name of your ship.png
 if(GRAPHICS==1):
@@ -52,7 +53,43 @@ def part_center_of_mass(part):
     else:
         print("ERROR: part_rotation not 0,1,2,3")
     return center_of_mass_x, center_of_mass_y
-    
+
+def part_center_of_thrust(part):
+    #each part has a center of thrust, relative to its own origin
+    #use part_data.thruster_data[part["ID"]][cot] to get the center of thrust relative to the origin
+    #the origin is the top left corner
+    #some parts don't have a center of thrust, we return 0 for those
+
+    #get part cot
+    part_cots = part_data.thruster_data.get(part["ID"], {"cot":0})["cot"]
+    if(part_cots==0):
+        return 0
+
+    #some parts have multiple cots, we return a list of all of them
+
+    part_rotation = part["Rotation"]#0,1,2,3
+    part_size = part_data.parts[part["ID"]]["size"]
+    absolute_cots = []
+    for part_cot in part_cots:
+        #calculate orientation
+        orientation = (part_rotation+part_cot[2])%4
+        #calculate center of thrust
+        if(part_rotation==0):
+            center_of_thrust_x = part["Location"][0] + part_cot[0]
+            center_of_thrust_y = part["Location"][1] + part_cot[1]
+        elif(part_rotation==1):
+            center_of_thrust_x = part["Location"][0] - part_cot[1] + part_size[1]
+            center_of_thrust_y = part["Location"][1] + part_cot[0]
+        elif(part_rotation==2):
+            center_of_thrust_x = part["Location"][0] - part_cot[0] + part_size[0]
+            center_of_thrust_y = part["Location"][1] - part_cot[1] + part_size[1]
+        elif(part_rotation==3):
+            center_of_thrust_x = part["Location"][0] + part_cot[1]
+            center_of_thrust_y = part["Location"][1] - part_cot[0] + part_size[0]
+        else:
+            print("ERROR: part_rotation not 0,1,2,3")
+        absolute_cots.append((center_of_thrust_x, center_of_thrust_y, orientation))
+    return absolute_cots
 
 def center_of_mass(parts):
     total_mass = 0
@@ -76,6 +113,37 @@ def center_of_mass(parts):
         center_of_mass_y = sum_y_mass / total_mass
 
     return center_of_mass_x, center_of_mass_y, total_mass
+
+def center_of_thrust(parts, direction):
+    #calculate center of thrust
+    #each part has a center of thrust, calculated by part_center_of_thrust(part)
+    #the center of thrust of the ship is the weighted average of the centers of thrust of the parts
+    #we only consider the thrusters in one direction (direction parameter)
+    #returns 0 if there are no thrusters in that direction
+
+    total_thrust = 0
+    sum_x_thrust = 0
+    sum_y_thrust = 0
+
+    for part in parts:
+        cots=part_center_of_thrust(part)
+        if(cots==0):
+            continue
+        for cot in cots:
+            if(cot[2]==direction):
+                mass=part_mass(part)
+                x_coord=cot[0]
+                y_coord=cot[1]
+
+                total_thrust += mass
+                sum_x_thrust += mass * x_coord
+                sum_y_thrust += mass * y_coord
+
+    if(total_thrust == 0):
+        return 0
+    return sum_x_thrust / total_thrust, sum_y_thrust / total_thrust
+
+
 
 def ascii_draw(tiles, parts, com):
     for part in parts:
@@ -148,7 +216,35 @@ def cvdraw_ship(parts, com, output_filename):
         for part in parts:
             x_coord,y_coord=part_center_of_mass(part)
             cv2.circle(img, (round((x_coord+60)*size_factor), round((y_coord+60)*size_factor)), 1, [0,255,0], -1)
+
+    if(DRAW_ALL_COT):
+        #add center of thrust of each part (as a red circle)
+        for part in parts:
+            cots=part_center_of_thrust(part)
+            if(cots==0):
+                continue
+            for cot in cots:
+                #cv2.circle(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), 1, [0,0,255], -1)
+                part_rotation = cot[2]
+                end_point = (0,0)
+                if(part_rotation==0):
+                    end_point = (cot[0], cot[1]-2)
+                elif(part_rotation==1):
+                    end_point = (cot[0]+2, cot[1])
+                elif(part_rotation==2):
+                    end_point = (cot[0], cot[1]+2)
+                elif(part_rotation==3):
+                    end_point = (cot[0]-2, cot[1])
+
+                #instead of drawing a line, draw an arrow
+                cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
     
+    #draw center of thrust of the ship (as a red arrow)
+    cot = center_of_thrust(parts, 0)
+    if(cot!=0):
+        end_point = (cot[0], cot[1]-10)
+        cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,127,255], 3, tipLength=0.3)
+
     #save image
     cv2.imwrite(output_filename, img)
     #show image
