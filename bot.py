@@ -30,8 +30,8 @@ async def on_ready():
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
 async def com(interaction: discord.Interaction, ship: discord.Attachment):
-    await ship.save('discord_bot\ship.ship.png')
     await interaction.response.defer()
+    await ship.save('discord_bot\ship.ship.png')
     try:
         data=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
     except:
