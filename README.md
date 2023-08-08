@@ -7,6 +7,6 @@ thanks to GameDungeon for making "cosmoteer_save_tools.py" https://gist.github.c
 Read the instructions inside com.py and execute it.
 
 Dependencies:
-pip install pillow numpy gzip
+pip install pillow numpy
 
 pip install opencv-python (optional)
