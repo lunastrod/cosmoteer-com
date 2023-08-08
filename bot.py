@@ -30,13 +30,17 @@ async def on_ready():
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
 async def com(interaction: discord.Interaction, ship: discord.Attachment):
+    print("defer")
     await interaction.response.defer()
+    print("deferred, saving")
     await ship.save('discord_bot\ship.ship.png')
+    print("saved, calculating")
     try:
         data=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
     except:
         await interaction.followup.send("Error: could not process ship")
         return
+    print("calculated, sending")
     with open('discord_bot\out.png', 'rb') as f, open("discord_bot\ship.ship.png", "rb") as s:#send the output image
         picture = discord.File(f)
         ship = discord.File(s)
