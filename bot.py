@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 import secret_token
-import center_of_mass
+import com_cot_image
 import asyncio
 
 intents = discord.Intents.default()
@@ -36,7 +36,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
     await ship.save('discord_bot\ship.ship.png')
     print("saved, calculating")
     try:
-        data=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
+        data=com_cot_image.com_cot_image("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
     except:
         await interaction.followup.send("Error: could not process ship")
         return
@@ -49,8 +49,6 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         
         await asyncio.sleep(3)
         await interaction.followup.send(text,files=files_to_send)
-        
-
 
 @tree.command(name="version", description=short_version_text)
 async def version(interaction: discord.Interaction):

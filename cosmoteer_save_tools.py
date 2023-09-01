@@ -13,8 +13,8 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # modified by LunastroD (I made this a library and removed the dependency on json because I'm reading the data directly)
-SHIP="ships/Sion.ship.png"
-JSON_ON=0
+SHIP="ships\The_Sun_Vanished.ship.png"
+JSON_ON=1
 if(JSON_ON):
     import json
 
@@ -299,6 +299,6 @@ if(JSON_ON):
 if(__name__ == "__main__"):
     if(JSON_ON):
         with open("out.json", "w") as f:
-            json.dump(Ship("This_ship_WILL_crash_your_game..ship.png").data, f, cls = JSONEncoderWithBytes)
+            json.dump(Ship(SHIP).data, f, cls = JSONEncoderWithBytes)
     else:
         print(Ship(SHIP).data)
