@@ -26,8 +26,8 @@ import cosmoteer_save_tools
 GRAPHICS=1 #set to 1 to use opencv to draw ship, 0 to use ascii representation
 DRAW_ALL_COM=0
 DRAW_ALL_COT=1
-WINDOWED=0 #set to 1 to show the opencv window
-SHIP="ships/Nion.ship.png" #set to the name of your ship.png
+WINDOWED=1 #set to 1 to show the opencv window
+SHIP="ships/top.png" #set to the name of your ship.png
 if(GRAPHICS==1):
     import cv2
     import numpy as np
@@ -124,13 +124,15 @@ def center_of_thrust(parts, direction):
     total_thrust = 0
     sum_x_thrust = 0
     sum_y_thrust = 0
+    print("direction", direction)
 
     for part in parts:
         cots=part_center_of_thrust(part)
         if(cots==0):
             continue
         for cot in cots:
-            if(cot[2]==direction):
+            print("cot", cot)
+            if(cot[2] in direction): # change to IN
                 mass=part_mass(part)
                 x_coord=cot[0]
                 y_coord=cot[1]
@@ -141,6 +143,9 @@ def center_of_thrust(parts, direction):
 
     if(total_thrust == 0):
         return 0
+    print('sum_x_thrust / total_thrust', sum_x_thrust / total_thrust)
+    print('sum_y_thrust / total_thrust', sum_y_thrust / total_thrust)
+    print('total_thrust', total_thrust)
     return sum_x_thrust / total_thrust, sum_y_thrust / total_thrust
 
 
@@ -240,10 +245,62 @@ def cvdraw_ship(parts, com, output_filename):
                 cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
     
     #draw center of thrust of the ship (as a red arrow)
-    cot = center_of_thrust(parts, 0)
-    if(cot!=0):
+    # here need to take only cot of matching thrusters passing the part and the direction expected
+    # get flight orientation
+        
+    ## find ship flight orientation forient = cosmoteer_save_tools.Ship(input_filename).data["FlightDirection"]
+    ## forient goes from 0 (top left) to 7 left and goes clokwise
+    ## find thrusters that are oriented in the same direction
+    ## for even orientations take thruster orientation +1 and -1 and apply thrust reduction for speed calculation
+    ## example if orientation is 2 (top right) then take into account thrusters oriented in 3 and 1 (right and top)
+
+    forient = cosmoteer_save_tools.Ship(SHIP).data["FlightDirection"]
+    print(forient)
+    # and if forient is 0 then matching thruster is 0 and 3
+    # and if forient is 1 then matching thruster is 0
+    # and if forient is 2 then matching thruster is 0 and 1
+    # and if forient is 3 then matching thruster is 1
+    # and if forient is 4 then matching thruster is 1 and 2
+    # and if forient is 5 then matching thruster is 2
+    # and if forient is 6 then matching thruster is 2 and 3
+    # and if forient is 7 then matching thruster is 3
+    if forient == 0:
+        fthruster = [0,3]
+        end_point = (cot[0]-10, cot[1]-10)  # change the end_point for forient = 0
+    elif forient == 1:
+        fthruster = [0]
         end_point = (cot[0], cot[1]-10)
-        cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,127,255], 3, tipLength=0.3)
+    elif forient == 2:
+        fthruster = [0,1]
+        end_point = (cot[0]+10, cot[1]-10)
+    elif forient == 3:
+        fthruster = [1]
+        end_point = (cot[0]+10, cot[1])
+    elif forient == 4:
+        fthruster = [1,2]
+        end_point = (cot[0]+10, cot[1]+10)
+    elif forient == 5:
+        fthruster = [2]
+        end_point = (cot[0], cot[1]+10)
+    elif forient == 6:
+        fthruster = [2,3]
+        end_point = (cot[0]-10, cot[1]+10)
+    elif forient == 7:
+        fthruster = [3]
+        end_point = (cot[0]-10, cot[1])
+
+    cot = center_of_thrust(parts, fthruster) # include array of orientation
+    if(cot!=0):
+        print('cot[0]', cot[0])
+        print('cot[1]', cot[1])
+        cv2.arrowedLine(
+            img, 
+            (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), # start must be center
+            (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), # end
+            [0,127,255],
+            3, 
+            tipLength=0.3
+            )
 
     #save image
     cv2.imwrite(output_filename, img)
