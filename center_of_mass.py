@@ -15,25 +15,20 @@
 # INSTRUCTIONS:
 # move your ship.png to the ships folder
 # change the SHIP variable to the name of your ship.png
-# if you have opencv installed, set GRAPHICS to 1 to draw your ship
 #   the center of mass of your ship will be drawn as a green circle
+#   the center of thrust will be drawn as a green arrow and yellow arrows for each direction
 #   if you can't see the window, the image will be saved as out.png
-# otherwise, set GRAPHICS to 0 to use an ascii representation of your ship
-#   the center of mass of your ship will be drawn as an "O"
 
 import part_data
 import cosmoteer_save_tools
-GRAPHICS=1 #set to 1 to use opencv to draw ship, 0 to use ascii representation
+GRAPHICS=1 #set to 1 to use opencv to draw ship
 DRAW_ALL_COM=0
 DRAW_ALL_COT=1
 WINDOWED=1 #set to 1 to show the opencv window
-SHIP="ships/top.png" #set to the name of your ship.png
+SHIP="ships\Reflection.ship.png" #set to the name of your ship.png
 if(GRAPHICS==1):
     import cv2
-    import numpy as np
-
-def part_mass(part):
-    return part_data.parts[part["ID"]]["mass"]
+    import numpy as np    
 
 def part_center_of_mass(part):
     #each part has a center of mass, relative to its own origin
@@ -97,7 +92,7 @@ def center_of_mass(parts):
     sum_y_mass = 0
 
     for part in parts:
-        mass=part_mass(part)
+        mass=part_data.parts[part["ID"]]["mass"]
         x_coord,y_coord=part_center_of_mass(part)
 
         total_mass += mass
@@ -114,8 +109,9 @@ def center_of_mass(parts):
 
     return center_of_mass_x, center_of_mass_y, total_mass
 
+"""
 def center_of_thrust(parts, direction):
-    #calculate center of thrust
+    #calculate center of thrustdirection
     #each part has a center of thrust, calculated by part_center_of_thrust(part)
     #the center of thrust of the ship is the weighted average of the centers of thrust of the parts
     #we only consider the thrusters in one direction (direction parameter)
@@ -147,9 +143,75 @@ def center_of_thrust(parts, direction):
     print('sum_y_thrust / total_thrust', sum_y_thrust / total_thrust)
     print('total_thrust', total_thrust)
     return sum_x_thrust / total_thrust, sum_y_thrust / total_thrust
+"""
+def center_of_thrust_vector(parts, ship_direction):
+    #calculate the center of thrust vector of the ship in a given direction
+    #each part has a center of thrust, calculated by part_center_of_thrust(part)
+    #returns a unit vector and the total thrust(originx, originy, endx, endy, thrust) representing the center of thrust vector
 
+    if ship_direction == 0:
+        fthruster = [0,3]
+    elif ship_direction == 1:
+        fthruster = [0]
+    elif ship_direction == 2:
+        fthruster = [0,1]
+    elif ship_direction == 3:
+        fthruster = [1]
+    elif ship_direction == 4:
+        fthruster = [1,2]
+    elif ship_direction == 5:
+        fthruster = [2]
+    elif ship_direction == 6:
+        fthruster = [2,3]
+    elif ship_direction == 7:
+        fthruster = [3]
+    
+    total_thrust = 0
+    total_thrust_direction = 0
 
+    sum_x_cot = 0
+    sum_y_cot = 0
+    
+    sum_x_thrust = 0
+    sum_y_thrust = 0
 
+    for part in parts:
+        cots=part_center_of_thrust(part)
+        if(cots==0):
+            continue
+        for cot in cots:
+            #print("cot", cot)
+            thrust=part_data.thruster_data[part["ID"]]["thrust"]
+            x_coord=cot[0]
+            y_coord=cot[1]
+
+            total_thrust += thrust
+            if(cot[2] in fthruster):
+                total_thrust_direction += thrust
+
+                sum_x_cot += thrust * x_coord
+                sum_y_cot += thrust * y_coord
+                if(cot[2] == 0):
+                    sum_y_thrust -= thrust
+                if(cot[2] == 1):
+                    sum_x_thrust += thrust
+                if(cot[2] == 2):
+                    sum_y_thrust += thrust
+                if(cot[2] == 3):
+                    sum_x_thrust -= thrust
+
+    if(total_thrust_direction==0):
+        return 0
+
+    startx = sum_x_cot / total_thrust_direction
+    starty = sum_y_cot / total_thrust_direction
+    endx = startx+sum_x_thrust / total_thrust *15
+    endy = starty+sum_y_thrust / total_thrust *15
+    
+    return startx, starty, endx, endy, total_thrust_direction/total_thrust
+    
+
+"""
 def ascii_draw(tiles, parts, com):
     for part in parts:
         x_coord = part["Location"][0] +60
@@ -166,11 +228,13 @@ def ascii_draw(tiles, parts, com):
                     tiles[y_coord+j][x_coord+i] = "."
         tiles[round(com[1])+60][round(com[0])+60] = "O"
 
+
 def print_tiles(tiles):
     for i in range(120):
         for j in range(120):
             print(tiles[i][j], end="")
         print()
+
 
 def draw_ship(parts, com, output_filename):
     if(GRAPHICS==1):
@@ -181,8 +245,9 @@ def draw_ship(parts, com, output_filename):
         ascii_draw(tiles, parts, com)
         print_tiles(tiles)
         print("center of mass: ", com)
+"""
 
-def cvdraw_ship(parts, com, output_filename):
+def draw_ship(parts, com, output_filename):
     #use opencv to draw ship
     #create blank image factor times of the ship
     size_factor = 8
@@ -242,11 +307,9 @@ def cvdraw_ship(parts, com, output_filename):
                     end_point = (cot[0]-2, cot[1])
 
                 #instead of drawing a line, draw an arrow
-                cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
+                cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 1, tipLength=0.3)
     
-    #draw center of thrust of the ship (as a red arrow)
-    # here need to take only cot of matching thrusters passing the part and the direction expected
-    # get flight orientation
+    #draw center of thrust of the ship
         
     ## find ship flight orientation forient = cosmoteer_save_tools.Ship(input_filename).data["FlightDirection"]
     ## forient goes from 0 (top left) to 7 left and goes clokwise
@@ -254,8 +317,6 @@ def cvdraw_ship(parts, com, output_filename):
     ## for even orientations take thruster orientation +1 and -1 and apply thrust reduction for speed calculation
     ## example if orientation is 2 (top right) then take into account thrusters oriented in 3 and 1 (right and top)
 
-    forient = cosmoteer_save_tools.Ship(SHIP).data["FlightDirection"]
-    print(forient)
     # and if forient is 0 then matching thruster is 0 and 3
     # and if forient is 1 then matching thruster is 0
     # and if forient is 2 then matching thruster is 0 and 1
@@ -264,43 +325,26 @@ def cvdraw_ship(parts, com, output_filename):
     # and if forient is 5 then matching thruster is 2
     # and if forient is 6 then matching thruster is 2 and 3
     # and if forient is 7 then matching thruster is 3
-    if forient == 0:
-        fthruster = [0,3]
-        end_point = (cot[0]-10, cot[1]-10)  # change the end_point for forient = 0
-    elif forient == 1:
-        fthruster = [0]
-        end_point = (cot[0], cot[1]-10)
-    elif forient == 2:
-        fthruster = [0,1]
-        end_point = (cot[0]+10, cot[1]-10)
-    elif forient == 3:
-        fthruster = [1]
-        end_point = (cot[0]+10, cot[1])
-    elif forient == 4:
-        fthruster = [1,2]
-        end_point = (cot[0]+10, cot[1]+10)
-    elif forient == 5:
-        fthruster = [2]
-        end_point = (cot[0], cot[1]+10)
-    elif forient == 6:
-        fthruster = [2,3]
-        end_point = (cot[0]-10, cot[1]+10)
-    elif forient == 7:
-        fthruster = [3]
-        end_point = (cot[0]-10, cot[1])
 
-    cot = center_of_thrust(parts, fthruster) # include array of orientation
-    if(cot!=0):
-        print('cot[0]', cot[0])
-        print('cot[1]', cot[1])
-        cv2.arrowedLine(
-            img, 
-            (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), # start must be center
-            (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), # end
-            [0,127,255],
-            3, 
-            tipLength=0.3
-            )
+    ship_orientation = cosmoteer_save_tools.Ship(SHIP).data["FlightDirection"]
+
+    for forient in range(7,-1,-1):
+        cot = center_of_thrust_vector(parts, forient) # include array of orientation
+        if(cot!=0):
+            print('cot', cot)
+            arrow_thickness=2
+            if(forient==ship_orientation):
+                arrow_color=[0,240,0]
+            else:
+                arrow_color=[0,255,255]
+            cv2.arrowedLine(
+                img, 
+                (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), # start must be center
+                (round((cot[2]+60)*size_factor), round((cot[3]+60)*size_factor)), # end
+                arrow_color,
+                arrow_thickness, 
+                tipLength=0.2
+                )
 
     #save image
     cv2.imwrite(output_filename, img)
@@ -316,6 +360,7 @@ def com(input_filename, output_filename):
     #calculate center of mass
     com = center_of_mass(parts)
     #draw ship
+    print("center of mass: ", com)
     draw_ship(parts, com, output_filename)#writes to out.png
     return com
 
