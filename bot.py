@@ -8,12 +8,11 @@ intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-short_version_text="Made by LunastroD, Aug 2023"
-version_text=short_version_text+", for the Excelsior discord server and the awesome Cosmoteer community :3\n    -Check out the source code at https://github.com/lunastrod/cosmoteer-com"
+short_version_text="Made by LunastroD, Aug 2023 - Sep 2023"
+version_text=short_version_text+", for the Excelsior discord server and the Cosmoteer community :3\n    -Check out the source code at <https://github.com/lunastrod/cosmoteer-com>"
 help_text="""
 /com: Calculates the center of mass of a cosmoteer ship.png
-    -the center of mass of your ship will be drawn as a green circle
-    -this tool is only a good aproximation of the com, total mass might be a bit off too
+-this tool is only a good aproximation of the com, total mass might be a bit off too
 /version: """+version_text+"""
 /help: Shows this message
 """
@@ -38,14 +37,17 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
     try:
         data=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
     except:
-        await interaction.followup.send("Error: could not process ship")
+        await interaction.followup.send("Error: could not process ship",file=discord.File("discord_bot\ship.ship.png"))
         return
     print("calculated, sending")
     with open('discord_bot\out.png', 'rb') as f, open("discord_bot\ship.ship.png", "rb") as s:#send the output image
         picture = discord.File(f)
         ship = discord.File(s)
         files_to_send: list[discord.File] = [ship,picture]
-        text="Center of mass: " + str(round(data[0],2)) + ", " + str(round(data[1],2)) + "\nTotal mass: " + str(round(data[2],2)) + "t"
+        text="use the /help command for more info\n"
+        text+="Center of mass: " + str(round(data[0],2)) + ", " + str(round(data[1],2)) + "\n"
+        text+="Total mass: " + str(round(data[2],2)) + "t\n"
+        text+="Predicted max speed: " + str(round(data[3],2)) + "m/s\n"
         
         await asyncio.sleep(3)
         await interaction.followup.send(text,files=files_to_send)
@@ -59,5 +61,7 @@ async def version(interaction: discord.Interaction):
 @tree.command(name="help", description="shows the list of commands")
 async def help(interaction: discord.Interaction):
     await interaction.response.send_message(help_text)
+    center_of_mass.draw_legend("legend.png")
+    await interaction.followup.send(help_text,file=discord.File("legend.png"))
 
 client.run(secret_token.token)
