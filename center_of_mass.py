@@ -440,9 +440,9 @@ def draw_legend(output_filename):
     #save the image
     cv2.imwrite(output_filename, img)
     #show the image
-    cv2.imshow('image',img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('image',img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
 def draw_ship(parts, com, output_filename):
     #use opencv to draw ship
