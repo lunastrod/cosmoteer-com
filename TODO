@@ -1,0 +1,7 @@
+- command arguments on the Bot
+    - booster thrusters
+    - disable strafe vectors
+- make the bot more reliable
+    - check if a ship is outside of the boundaries
+    - check if it has unknown parts
+    - why does the bot crash sometimes? it might be because it lost connection to the discord api
