@@ -26,8 +26,8 @@ DRAW_ALL_COM=0
 DRAW_COM=1
 DRAW_COTS=1
 DRAW_ALL_COT=1
-WINDOWED=1 #set to 1 to show the opencv window
-SHIP="ships\Sion.ship.png" #set to the name of your ship.png
+WINDOWED=0 #set to 1 to show the opencv window
+SHIP="ships\square.ship.png" #set to the name of your ship.png
 if(GRAPHICS==1):
     import cv2
     import numpy as np
@@ -269,13 +269,190 @@ def draw_ship(parts, com, output_filename):
         print("center of mass: ", com)
 """
 
+# Define a function to rotate an image by the specified angle
+def rotate_image(image, angle, flipx):
+    if(flipx):
+        image = np.fliplr(image)
+    if angle == 0:
+        return image
+    elif angle == 1:
+        return np.rot90(image, 3)
+    elif angle == 2:
+        return np.rot90(image, 2)
+    elif angle == 3:
+        return np.rot90(image, 1)
+    else:
+        return image
+
+# Define a function to insert a sprite onto the background image with a specified size and handle transparency
+# Define a function to insert a sprite onto the background image with a specified size and handle transparency
+def insert_sprite(background, sprite, x, y, rotation, flipx, size):
+    sprite = cv2.resize(sprite, size)
+
+    sprite = rotate_image(sprite, rotation, flipx)
+
+    y_end, x_end, _ = sprite.shape
+
+    # Ensure that the sprite fits within the specified region
+    if y + y_end <= background.shape[0] and x + x_end <= background.shape[1]:
+        # Extract the RGB channels from the sprite
+        sprite_rgb = sprite[:, :, :3]
+
+        # Extract the alpha channel from the sprite (opacity)
+        alpha_channel = sprite[:, :, 3] / 255.0  # Normalize to range [0, 1]
+
+        # Extract the corresponding region from the background
+        background_region = background[y:y+y_end, x:x+x_end]
+
+        # Blend the sprite with the background using alpha compositing
+        for c in range(3):  # Iterate over RGB channels
+            background_region[:, :, c] = (
+                (1.0 - alpha_channel) * background_region[:, :, c]
+                + alpha_channel * sprite_rgb[:, :, c]
+            )
+
+    else:
+        # Handle cases where the sprite doesn't fit within the region
+        print(f"Warning: Sprite at ({x}, {y}) exceeds the background dimensions.")
+
+def sprite_position(part, position):
+    #calculates the offset needed to draw a sprite at a given position
+    sprite_size = part_data.parts[part["ID"]].get("sprite_size")
+    if(sprite_size==None):
+        return position
+    #get part size
+    part_size = part_data.parts[part["ID"]]["size"]
+    part_rotation = part["Rotation"]
+    #problematic parts on rotation 0 and 3:
+    up_turret_parts=["cosmoteer.laser_blaster_small","cosmoteer.laser_blaster_large","cosmoteer.disruptor","cosmoteer.ion_beam_emitter","cosmoteer.ion_beam_prism","cosmoteer.point_defense","cosmoteer.cannon_med","cosmoteer.cannon_large","cosmoteer.cannon_deck","cosmoteer.missile_launcher","cosmoteer.railgun_launcher","cosmoteer.flak_cannon_large","cosmoteer.shield_gen_small"]
+    #problematic parts on rotation 1 and 2:
+    down_turret_parts=["cosmoteer.thruster_small","cosmoteer.thruster_med","cosmoteer.thruster_large","cosmoteer.thruster_huge","cosmoteer.thruster_boost"]
+    #special parts:
+    multiple_turrets=["cosmoteer.thruster_small_2way","cosmoteer.thruster_small_3way"]
+
+    if(part_rotation==0 and part["ID"] in up_turret_parts):
+        position[1]=position[1]-(sprite_size[1]-part_size[1])
+    elif(part_rotation==3 and part["ID"] in up_turret_parts):
+        position[0]=position[0]-(sprite_size[1]-part_size[1])
+    elif(part_rotation==1 and part["ID"] in down_turret_parts):
+        position[0]=position[0]-(sprite_size[1]-part_size[1])
+    elif(part_rotation==2 and part["ID"] in down_turret_parts):
+        position[1]=position[1]-(sprite_size[1]-part_size[1])
+    elif(part["ID"] in multiple_turrets):
+        if(part["ID"]=="cosmoteer.thruster_small_2way"):
+            if(part_rotation==1):
+                position[0]=position[0]-1
+            if(part_rotation==2):
+                position[0]=position[0]-1
+                position[1]=position[1]-1
+            if(part_rotation==3):
+                position[1]=position[1]-1
+        if(part["ID"]=="cosmoteer.thruster_small_3way"):
+            if(part_rotation==0):
+                position[0]=position[0]-1
+            if(part_rotation==1):
+                position[0]=position[0]-1
+                position[1]=position[1]-1
+            if(part_rotation==2):
+                position[0]=position[0]-1
+                position[1]=position[1]-1
+            if(part_rotation==3):
+                position[1]=position[1]-1
+    return position
+
+def crop(image,margin=10):
+    y_nonzero, x_nonzero, _ = np.nonzero(image)
+    xmin=np.min(x_nonzero)-margin
+    xmax=np.max(x_nonzero)+margin
+    ymin=np.min(y_nonzero)-margin
+    ymax=np.max(y_nonzero)+margin
+    if(xmin<0):
+        xmin=0
+    if(xmax>image.shape[1]):
+        xmax=image.shape[1]
+    if(ymin<0):
+        ymin=0
+    if(ymax>image.shape[0]):
+        ymax=image.shape[0]
+    return image[ymin:ymax,xmin:xmax]
+
+def draw_legend(output_filename):
+    """
+    #create an image
+    img = np.zeros((1024,1024,3), np.uint8)
+    #draw a green arrow, a yellow arrow, a red arrow, a green circle
+    cv2.arrowedLine(img, (300, 40), (400, 40), [0,255,0], 3, tipLength=0.3)
+    cv2.arrowedLine(img, (300, 100), (400, 100), [0,255,255], 3, tipLength=0.3)
+    cv2.arrowedLine(img, (300, 160), (400, 160), [0,0,255], 3, tipLength=0.3)
+    cv2.circle(img, (300, 220), 10, [0,255,0], -1)
+    #draw a dots size 6 at the start of the arrows
+    cv2.circle(img, (300, 40), 6, [0,255,0], -1)
+    cv2.circle(img, (300, 100), 6, [0,255,255], -1)
+    cv2.circle(img, (300, 160), 6, [0,0,255], -1)
+    #add text
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    #center of mass next to green circle
+    cv2.putText(img,'Center of Mass',(320,420), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    #add white thin arrow from text to circle
+    cv2.arrowedLine(img, (320, 410), (300, 400), [255,255,255], 2, tipLength=0.3)
+    #save the image
+    cv2.imwrite(output_filename, img)
+    #show the image
+
+    cv2.imshow('image',img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    """
+    line_sep=40
+    left_margin=300
+    img = np.zeros((line_sep*5,600,3), np.uint8)
+    #draw a green arrow, a yellow arrow, a red arrow, a green circle
+    cv2.arrowedLine(img, (left_margin, line_sep*1), (left_margin+100, line_sep*1), [0,255,0], 3, tipLength=0.3)
+    cv2.arrowedLine(img, (left_margin, line_sep*2), (left_margin+100, line_sep*2), [0,255,255], 3, tipLength=0.3)
+    cv2.arrowedLine(img, (left_margin, line_sep*3), (left_margin+100, line_sep*3), [0,0,255], 3, tipLength=0.3)
+    cv2.circle(img, (left_margin, line_sep*4), 10, [0,255,0], -1)
+    #draw a dots size 6 at the start of the arrows
+    cv2.circle(img, (left_margin, line_sep*1), 6, [0,255,0], -1)
+    cv2.circle(img, (left_margin, line_sep*2), 6, [0,255,255], -1)
+    cv2.circle(img, (left_margin, line_sep*3), 6, [0,0,255], -1)
+    #add text
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    #center of mass next to green circle
+    cv2.putText(img,'Center of Mass',(left_margin+20,line_sep*4+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    #add white thin arrow from text to circle
+    cv2.arrowedLine(img, (left_margin+20, line_sep*4), (left_margin, line_sep*4), [255,255,255], 2, tipLength=0.2)
+    #center of thrust to the left of green arrow
+    cv2.putText(img,'Center of Thrust',(left_margin-200,line_sep*1+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    #add white thin arrow from text to start of green arrow
+    cv2.arrowedLine(img, (left_margin-50, line_sep*1), (left_margin, line_sep*1), [255,255,255], 2, tipLength=0.2)
+    #strafe center of thrust to the left of yellow arrow
+    cv2.putText(img,'Strafe Center of Thrust',(left_margin-250,line_sep*2+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    #add white thin arrow from text to start of yellow arrow
+    cv2.arrowedLine(img, (left_margin-50, line_sep*2), (left_margin, line_sep*2), [255,255,255], 2, tipLength=0.2)
+    #engine center of thrust to the left of red arrow
+    cv2.putText(img,'Engine Center of Thrust',(left_margin-250,line_sep*3+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    #add white thin arrow from text to start of red arrow
+    cv2.arrowedLine(img, (left_margin-50, line_sep*3), (left_margin, line_sep*3), [255,255,255], 2, tipLength=0.2)
+    #to the right of the arrows, add "length of arrow depends on thrust" on 3 lines
+    cv2.putText(img,'length of vector',(left_margin+120,line_sep*1+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'depends on thrust',(left_margin+120,line_sep*2+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'on that direction',(left_margin+120,line_sep*3+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    #save the image
+    cv2.imwrite(output_filename, img)
+    #show the image
+    cv2.imshow('image',img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
 def draw_ship(parts, com, output_filename):
     #use opencv to draw ship
     #create blank image factor times of the ship
-    size_factor = 8
+    sprite_square_size = 64
+    size_factor = round(sprite_square_size/4)
     square_size = round(size_factor)
     img = np.zeros((120*size_factor,120*size_factor,3), np.uint8)
 
+    """
     BLUE_PARTS= ["cosmoteer.shield_gen_small","cosmoteer.shield_gen_large","cosmoteer.control_room_small","cosmoteer.control_room_med","cosmoteer.control_room_large", "cosmoteer.armor", "cosmoteer.armor_2x1","cosmoteer.armor_wedge","cosmoteer.armor_1x2_wedge","cosmoteer.armor_1x3_wedge","cosmoteer.armor_tri","cosmoteer.armor_structure_hybrid_1x1","cosmoteer.armor_structure_hybrid_1x2","cosmoteer.armor_structure_hybrid_1x3","cosmoteer.armor_structure_hybrid_tri"]
     GREY_PARTS= ["cosmoteer.structure","cosmoteer.structure_wedge","cosmoteer.structure_1x2_wedge","cosmoteer.structure_1x3_wedge","cosmoteer.structure_tri","cosmoteer.corridor","cosmoteer.fire_extinguisher","cosmoteer.airlock","cosmoteer.crew_quarters_small","cosmoteer.crew_quarters_med","cosmoteer.conveyor","cosmoteer.storage_2x2","cosmoteer.storage_3x2","cosmoteer.storage_3x3","cosmoteer.storage_4x3","cosmoteer.storage_4x4"]
     THRUSTERS= ["cosmoteer.thruster_small","cosmoteer.thruster_med","cosmoteer.thruster_large","cosmoteer.thruster_small_2way","cosmoteer.thruster_small_3way","cosmoteer.thruster_huge","cosmoteer.thruster_boost"]
@@ -309,7 +486,29 @@ def draw_ship(parts, com, output_filename):
                 cv2.rectangle(img, (round((x_coord+i)*size_factor+1), round((y_coord+j)*size_factor+1)),
                                 (round((x_coord+i+1)*size_factor-1), round((y_coord+j+1)*size_factor-1)),
                                 color, -1)
-        
+    """
+
+    #using sprites instead of rectangles
+    for i in range(len(parts)):
+        if(parts[i]["ID"] in ["cosmoteer.cannon_deck","cosmoteer.ion_beam_prism"]):
+            parts.append(parts.pop(i))#move top turrets to the end of the list so they are drawn last
+    for part in parts:
+        x_coord = part["Location"][0] +60
+        y_coord = part["Location"][1] +60
+        size=part_data.parts[part["ID"]]["size"]
+        rotation=part["Rotation"]
+        flipx=part["FlipX"]
+
+        x_coord,y_coord=sprite_position(part, [x_coord, y_coord])
+
+        sprite_path="sprites/"+part["ID"].replace("cosmoteer.","")+".png"
+        img_part = cv2.imread(sprite_path, cv2.IMREAD_UNCHANGED)
+        #print(img_part.shape)
+        #insert_sprite(img, img_part, round(x_coord*size_factor),round(y_coord*size_factor) , rotation,flipx, (round(size[0]*size_factor), round(size[1]*size_factor)))
+        insert_sprite(img, img_part, round(x_coord*size_factor),round(y_coord*size_factor) , rotation,flipx, (round(img_part.shape[1]/4), round(img_part.shape[0]/4)))
+    #the image should be a bit darker
+    img=img*0.8
+
     if(DRAW_COM):
         #add center of mass (as a green circle)
         cv2.circle(img, (round((com[0]+60)*size_factor), round((com[1]+60)*size_factor)), square_size, [0,255,0], -1)
@@ -337,9 +536,11 @@ def draw_ship(parts, com, output_filename):
                     end_point = (cot[0], cot[1]+2)
                 elif(part_rotation==3):
                     end_point = (cot[0]-2, cot[1])
-
-                #instead of drawing a line, draw an arrow
-                cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 1, tipLength=0.3)
+                
+                
+                cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
+                #also draw a dot at the start of the arrow
+                cv2.circle(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), 3, [0,0,255], -1)
     
     #draw center of thrust of the ship
         
@@ -359,12 +560,14 @@ def draw_ship(parts, com, output_filename):
     # and if forient is 7 then matching thruster is 3
     if(DRAW_COTS):
         ship_orientation = cosmoteer_save_tools.Ship(SHIP).data["FlightDirection"]
-
-        for forient in range(7,-1,-1):
+        arrow_draw_order=list(range(7,-1,-1))
+        arrow_draw_order.remove(ship_orientation)
+        arrow_draw_order.append(ship_orientation)
+        for forient in arrow_draw_order:
             cot = center_of_thrust_vector(parts, forient) # include array of orientation
             if(cot!=0):
-                print('cot', cot)
-                arrow_thickness=2
+                #print('cot', cot)
+                arrow_thickness=3
                 if(forient==ship_orientation):
                     arrow_color=[0,240,0]
                 else:
@@ -377,6 +580,11 @@ def draw_ship(parts, com, output_filename):
                     arrow_thickness, 
                     tipLength=0.2
                     )
+                #also draw a dot at the start of the arrow
+                cv2.circle(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), 5, arrow_color, -1)
+                
+    #crop image (remove the black border around the ship)
+    img=crop(img)
 
     #save image
     cv2.imwrite(output_filename, img)
@@ -394,6 +602,7 @@ def com(input_filename, output_filename):
     #draw ship
     print("center of mass: ", com)
     draw_ship(parts, com, output_filename)#writes to out.png
+    draw_legend("legend.png")
     return com
 
 if(__name__ == "__main__"):
