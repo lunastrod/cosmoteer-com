@@ -27,7 +27,7 @@ DRAW_COM=1
 DRAW_COTS=1
 DRAW_ALL_COT=1
 WINDOWED=0 #set to 1 to show the opencv window
-SHIP="ships\square.ship.png" #set to the name of your ship.png
+SHIP="ships\Sion.ship.png" #set to the name of your ship.png
 if(GRAPHICS==1):
     import cv2
     import numpy as np
@@ -76,6 +76,17 @@ def thruster_touching_engine_room(parts,thruster):
         if(part["ID"]=="cosmoteer.engine_room" and parts_touching(thruster,part)):
             return True
     return False
+
+def total_thrust(parts):
+    #returns the total thrust of all the thrusters in the ship
+    total_thrust = 0
+    for part in parts:
+        if(part["ID"] in part_data.thruster_data):
+            if(thruster_touching_engine_room(parts,part)):
+                total_thrust += part_data.thruster_data[part["ID"]]["thrust"]*1.5
+            else:
+                total_thrust += part_data.thruster_data[part["ID"]]["thrust"]
+    return total_thrust
 
 def top_speed(mass,thrust):
     speed=0
@@ -598,12 +609,13 @@ def com(input_filename, output_filename):
     #read ship.png, extract part data
     parts=cosmoteer_save_tools.Ship(input_filename).data["Parts"]
     #calculate center of mass
-    com = center_of_mass(parts)
+    data = center_of_mass(parts)
+    data=list(data)
+    data.append(top_speed(data[2],total_thrust(parts)))
     #draw ship
     print("center of mass: ", com)
-    draw_ship(parts, com, output_filename)#writes to out.png
-    draw_legend("legend.png")
-    return com
+    draw_ship(parts, data, output_filename)#writes to out.png
+    return data
 
 if(__name__ == "__main__"):
     com(SHIP, "out.png")
