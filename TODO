@@ -5,3 +5,5 @@
     - check if a ship is outside of the boundaries
     - check if it has unknown parts
     - why does the bot crash sometimes? it might be because it lost connection to the discord api
+- improve api
+    - vector outlines?
