@@ -12,9 +12,20 @@ short_version_text="Made by LunastroD, Aug 2023 - Sep 2023"
 version_text=short_version_text+", for the Excelsior discord server and the Cosmoteer community :3\n    -Check out the source code at <https://github.com/lunastrod/cosmoteer-com>"
 help_text="""
 /com: Calculates the center of mass of a cosmoteer ship.png
--this tool is only a good aproximation of the com, total mass might be a bit off too
+
 /version: """+version_text+"""
+
 /help: Shows this message
+
+common questions:
+- does the bot consider the 5% lateral thrust? yes
+- does the bot consider engine room buff? yes
+- is the cot exact? it should be
+- is the com exact? no, it's a decent approximation, it should be inside the green circle
+- is the max speed exact? no, it's an approximation, assume ±1%, and it assumes your ship is balanced
+- are boosters on or off for the calculation of the cot? they are on
+
+- If you notice any mistakes on things like the total mass or the speed, ping me
 """
 
 @client.event
