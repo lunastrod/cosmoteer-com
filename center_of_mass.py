@@ -676,7 +676,7 @@ def draw_ship(parts, data_com, data_cot, ship_orientation, output_filename):
         origin_thrust.append(origin_thrust.pop(ship_orientation))
         thrust_vector.append(thrust_vector.pop(ship_orientation))
         thrust_direction.append(thrust_direction.pop(ship_orientation))
-        size_of_arrow=12
+        size_of_arrow=20
         #print the vectors
 
         for i in range(8):
