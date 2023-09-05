@@ -4,6 +4,21 @@
 - make the bot more reliable
     - check if a ship is outside of the boundaries
     - check if it has unknown parts
-    - why does the bot crash sometimes? it might be because it lost connection to the discord api
+    - why does the bot crash sometimes?
 - improve api
     - vector outlines?
+- optimize
+    - save_tools could be faster
+    - make a fast mode that represents the ship as fast as possible, maybe using pixels
+- 5% lateral thrust of each thruster
+
+- ask this:
+    hi! I made this to predict the max speed of a ship. It's very very close but not quite there. It predicts a couple m/s more. Is there anything wrong with my formula?
+
+    def top_speed(mass,thrust):
+        speed=0
+        for i in range(100):
+            drag=max(speed / 75, 1)*2 speed * 0.4
+            acceleration=thrust/mass-drag
+            speed=speed+acceleration/30
+        return speed 

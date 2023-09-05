@@ -21,13 +21,16 @@
 
 import part_data
 import cosmoteer_save_tools
+from pathlib import Path
+from vector2d import Vector2D
+
 GRAPHICS=1 #set to 1 to use opencv to draw ship
 DRAW_ALL_COM=0
 DRAW_COM=1
 DRAW_COTS=1
-DRAW_ALL_COT=1
+DRAW_ALL_COT=0
 WINDOWED=0 #set to 1 to show the opencv window
-SHIP="ships\Sion.ship.png" #set to the name of your ship.png
+SHIP="ships/mo.ship.png" #set to the name of your ship.png
 if(GRAPHICS==1):
     import cv2
     import numpy as np
@@ -77,23 +80,125 @@ def thruster_touching_engine_room(parts,thruster):
             return True
     return False
 
-def total_thrust(parts):
-    #returns the total thrust of all the thrusters in the ship
-    total_thrust = 0
+def center_of_thrust(parts):
+    #returns a list of vectors in each direction (0,1,2,3,4,5,6,7)
+    #each vector is a tuple (originx, originy, endx, endy, thrust)    
+    origin_thrust=[Vector2D(0,0),Vector2D(0,0),Vector2D(0,0),Vector2D(0,0)]
+
+    thrust_direction=[0,0,0,0]
+
     for part in parts:
-        if(part["ID"] in part_data.thruster_data):
+        cots=part_center_of_thrust(part)
+        if(cots==0):
+            continue
+        for cot in cots:
+            origin=cot[0]
+            orientation=cot[1]
+            #print("cot", cot)
+            #thrust=part_data.thruster_data[part["ID"]]["thrust"]
+            thrust=cot[2]
             if(thruster_touching_engine_room(parts,part)):
-                total_thrust += part_data.thruster_data[part["ID"]]["thrust"]*1.5
-            else:
-                total_thrust += part_data.thruster_data[part["ID"]]["thrust"]
-    return total_thrust
+                thrust=thrust*1.5
+
+            thrust_direction[orientation] += thrust
+            origin_thrust[orientation] += origin*thrust
+
+    for i in range(len(thrust_direction)):
+        if(thrust_direction[i]==0):
+            continue
+        origin_thrust[i]=origin_thrust[i]/thrust_direction[i]
+    #calculate the end of the thrust vector
+    thrust_vector=[Vector2D(0,0),Vector2D(0,0),Vector2D(0,0),Vector2D(0,0)]
+    #0 is up, 1 is right, 2 is down, 3 is left
+    thrust_vector[0]=origin_thrust[0]+Vector2D(0,-thrust_direction[0])
+    thrust_vector[1]=origin_thrust[1]+Vector2D(thrust_direction[1],0)
+    thrust_vector[2]=origin_thrust[2]+Vector2D(0,thrust_direction[2])
+    thrust_vector[3]=origin_thrust[3]+Vector2D(-thrust_direction[3],0)
+
+    return origin_thrust,thrust_vector,thrust_direction
+
+    """
+    startx = sum_x_cot / total_thrust_direction
+    starty = sum_y_cot / total_thrust_direction
+    endx = startx+sum_x_thrust
+    endy = starty+sum_y_thrust
+    
+    return startx, starty, endx, endy, total_thrust_direction/total_thrust
+    """
+
+def diagonal_center_of_thrust(origin_thrust,thrust_vector,thrust_direction):
+    #calculates the center of thrust vectors for the diagonal directions
+    #returns a list of vectors in each direction (0,1,2,3,4,5,6,7)
+
+    #0 is up_left, 1 is up_right, 2 is down_right, 3 is down_left
+    diagonal_thrust_vector=[Vector2D(0,0),Vector2D(0,0),Vector2D(0,0),Vector2D(0,0)]
+    diagonal_thrust_direction=[0,0,0,0]
+    diagonal_origin_thrust=[Vector2D(0,0),Vector2D(0,0),Vector2D(0,0),Vector2D(0,0)]
+    """
+    #up_left
+    if(thrust_direction[0]!=0 and thrust_direction[3]!=0):
+        diagonal_thrust_direction[0]=(thrust_direction[0]+thrust_direction[3])**0.5
+        diagonal_origin_thrust[0]=Vector2D.Lerp(origin_thrust[0],origin_thrust[3],thrust_direction[3]/(thrust_direction[3]+thrust_direction[0]))
+        diagonal_thrust_vector[0]=diagonal_origin_thrust[0]+Vector2D(-thrust_direction[3],-thrust_direction[0])
+
+    #up_right
+    if(thrust_direction[1]!=0 and thrust_direction[0]!=0):
+        diagonal_thrust_direction[1]=(thrust_direction[0]+thrust_direction[1])**0.5
+        diagonal_origin_thrust[1]=Vector2D.Lerp(origin_thrust[0],origin_thrust[1],thrust_direction[1]/(thrust_direction[1]+thrust_direction[0]))
+        diagonal_thrust_vector[1]=diagonal_origin_thrust[1]+Vector2D(thrust_direction[1],-thrust_direction[0])
+
+    #down_right
+    if(thrust_direction[2]!=0 and thrust_direction[1]!=0):
+        diagonal_thrust_direction[2]=(thrust_direction[2]+thrust_direction[1])**0.5
+        diagonal_origin_thrust[2]=Vector2D.Lerp(origin_thrust[2],origin_thrust[1],thrust_direction[1]/(thrust_direction[2]+thrust_direction[1]))
+        diagonal_thrust_vector[2]=diagonal_origin_thrust[2]+Vector2D(thrust_direction[1],thrust_direction[2])
+
+    #down_left
+    if(thrust_direction[2]!=0 and thrust_direction[3]!=0):
+        diagonal_thrust_direction[3]=(thrust_direction[2]+thrust_direction[3])**0.5
+        diagonal_origin_thrust[3]=Vector2D.Lerp(origin_thrust[2],origin_thrust[3],thrust_direction[3]/(thrust_direction[2]+thrust_direction[3]))
+        diagonal_thrust_vector[3]=diagonal_origin_thrust[3]+Vector2D(-thrust_direction[3],thrust_direction[2])
+
+    """
+    for i in range(4):
+        if(thrust_direction[i]!=0 and thrust_direction[(i+3)%4]!=0):
+            diagonal_thrust_direction[i]=(thrust_direction[i]**2+thrust_direction[(i+3)%4]**2)**0.5
+            print("aaaaaaaaaa")
+            print(diagonal_thrust_direction[i])
+            diagonal_origin_thrust[i]=Vector2D.Lerp(origin_thrust[i],origin_thrust[(i+3)%4],thrust_direction[(i+3)%4]/(thrust_direction[(i+3)%4]+thrust_direction[i]))
+    diagonal_thrust_vector[0]=diagonal_origin_thrust[0]+Vector2D(-thrust_direction[3],-thrust_direction[0])
+    diagonal_thrust_vector[1]=diagonal_origin_thrust[1]+Vector2D(thrust_direction[1],-thrust_direction[0])
+    diagonal_thrust_vector[2]=diagonal_origin_thrust[2]+Vector2D(thrust_direction[1],thrust_direction[2])
+    diagonal_thrust_vector[3]=diagonal_origin_thrust[3]+Vector2D(-thrust_direction[3],thrust_direction[2])
+
+    all_thrust_vector=[]
+    all_thrust_direction=[]
+    all_origin_thrust=[]
+    for i in range(4):
+        all_thrust_vector.append(diagonal_thrust_vector[i])
+        all_thrust_vector.append(thrust_vector[i])
+        all_thrust_direction.append(diagonal_thrust_direction[i])
+        all_thrust_direction.append(thrust_direction[i])
+        all_origin_thrust.append(diagonal_origin_thrust[i])
+        all_origin_thrust.append(origin_thrust[i])
+    return all_origin_thrust,all_thrust_vector,all_thrust_direction
 
 def top_speed(mass,thrust):
+    """
     speed=0
     for i in range(100):
         drag=(max(speed / 75, 1)**2 * speed * 0.4)
         acceleration=thrust/mass-drag
         speed=speed+acceleration/30
+    return speed
+    """
+    print(thrust)
+    correction=1
+    x=thrust/mass
+    speed=2.5*x*correction
+    if(speed>75):
+        correction=1
+        speed=(14062.5*x)**(1/3)*correction
     return speed
 
 def part_center_of_mass(part):
@@ -121,8 +226,11 @@ def part_center_of_thrust(part):
     #the origin is the top left corner
     #some parts don't have a center of thrust, we return 0 for those
 
+    #returns a list of tuples (origin(x,y),orientation,thrust) representing the multiple cots of a part
+
     #get part cot
     part_cots = part_data.thruster_data.get(part["ID"], {"cot":0})["cot"]
+    thrust=part_data.thruster_data.get(part["ID"], {"thrust":0})["thrust"]
     if(part_cots==0):
         return 0
 
@@ -149,7 +257,13 @@ def part_center_of_thrust(part):
             center_of_thrust_y = part["Location"][1] - part_cot[0] + part_size[0]
         else:
             print("ERROR: part_rotation not 0,1,2,3")
-        absolute_cots.append((center_of_thrust_x, center_of_thrust_y, orientation))
+        absolute_cots.append((Vector2D(center_of_thrust_x,center_of_thrust_y), orientation,thrust))
+
+    for i in range(len(absolute_cots)):
+        #each cot has 2 additional cots attatched, they have 5% of the thrust of the main cot on the same origin
+        absolute_cots.append((absolute_cots[i][0],(absolute_cots[i][1]+1)%4,absolute_cots[i][2]*0.05))
+        absolute_cots.append((absolute_cots[i][0],(absolute_cots[i][1]+3)%4,absolute_cots[i][2]*0.05))
+    #print(absolute_cots)
     return absolute_cots
 
 def center_of_mass(parts):
@@ -455,7 +569,7 @@ def draw_legend(output_filename):
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
 
-def draw_ship(parts, com, output_filename):
+def draw_ship(parts, data_com, data_cot, ship_orientation, output_filename):
     #use opencv to draw ship
     #create blank image factor times of the ship
     sprite_square_size = 64
@@ -515,14 +629,13 @@ def draw_ship(parts, com, output_filename):
         sprite_path="sprites/"+part["ID"].replace("cosmoteer.","")+".png"
         img_part = cv2.imread(sprite_path, cv2.IMREAD_UNCHANGED)
         #print(img_part.shape)
-        #insert_sprite(img, img_part, round(x_coord*size_factor),round(y_coord*size_factor) , rotation,flipx, (round(size[0]*size_factor), round(size[1]*size_factor)))
         insert_sprite(img, img_part, round(x_coord*size_factor),round(y_coord*size_factor) , rotation,flipx, (round(img_part.shape[1]/4), round(img_part.shape[0]/4)))
     #the image should be a bit darker
     img=img*0.8
 
     if(DRAW_COM):
         #add center of mass (as a green circle)
-        cv2.circle(img, (round((com[0]+60)*size_factor), round((com[1]+60)*size_factor)), square_size, [0,255,0], -1)
+        cv2.circle(img, (round((data_com[0]+60)*size_factor), round((data_com[1]+60)*size_factor)), square_size, [0,255,0], -1)
         if(DRAW_ALL_COM):
             #add center of mass of each part (as a green circle)
             for part in parts:
@@ -537,62 +650,59 @@ def draw_ship(parts, com, output_filename):
                 continue
             for cot in cots:
                 #cv2.circle(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), 1, [0,0,255], -1)
-                part_rotation = cot[2]
+                part_rotation = cot[1]
+                vector=cot[0]
                 end_point = (0,0)
                 if(part_rotation==0):
-                    end_point = (cot[0], cot[1]-2)
+                    end_point = (vector.x, vector.y-2)
                 elif(part_rotation==1):
-                    end_point = (cot[0]+2, cot[1])
+                    end_point = (vector.x+2, vector.y)
                 elif(part_rotation==2):
-                    end_point = (cot[0], cot[1]+2)
+                    end_point = (vector.x, vector.y+2)
                 elif(part_rotation==3):
-                    end_point = (cot[0]-2, cot[1])
+                    end_point = (vector.x-2, vector.y)
                 
                 
-                cv2.arrowedLine(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
+                cv2.arrowedLine(img, (round((vector.x+60)*size_factor), round((vector.y+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
                 #also draw a dot at the start of the arrow
-                cv2.circle(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), 3, [0,0,255], -1)
+                cv2.circle(img, (round((vector.x+60)*size_factor), round((vector.y+60)*size_factor)), 3, [0,0,255], -1)
     
     #draw center of thrust of the ship
-        
-    ## find ship flight orientation forient = cosmoteer_save_tools.Ship(input_filename).data["FlightDirection"]
-    ## forient goes from 0 (top left) to 7 left and goes clokwise
-    ## find thrusters that are oriented in the same direction
-    ## for even orientations take thruster orientation +1 and -1 and apply thrust reduction for speed calculation
-    ## example if orientation is 2 (top right) then take into account thrusters oriented in 3 and 1 (right and top)
-
-    # and if forient is 0 then matching thruster is 0 and 3
-    # and if forient is 1 then matching thruster is 0
-    # and if forient is 2 then matching thruster is 0 and 1
-    # and if forient is 3 then matching thruster is 1
-    # and if forient is 4 then matching thruster is 1 and 2
-    # and if forient is 5 then matching thruster is 2
-    # and if forient is 6 then matching thruster is 2 and 3
-    # and if forient is 7 then matching thruster is 3
     if(DRAW_COTS):
-        ship_orientation = cosmoteer_save_tools.Ship(SHIP).data["FlightDirection"]
-        arrow_draw_order=list(range(7,-1,-1))
-        arrow_draw_order.remove(ship_orientation)
-        arrow_draw_order.append(ship_orientation)
-        for forient in arrow_draw_order:
-            cot = center_of_thrust_vector(parts, forient) # include array of orientation
-            if(cot!=0):
-                #print('cot', cot)
-                arrow_thickness=3
-                if(forient==ship_orientation):
-                    arrow_color=[0,240,0]
-                else:
-                    arrow_color=[0,255,255]
-                cv2.arrowedLine(
-                    img, 
-                    (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), # start must be center
-                    (round((cot[2]+60)*size_factor), round((cot[3]+60)*size_factor)), # end
-                    arrow_color,
-                    arrow_thickness, 
-                    tipLength=0.2
-                    )
-                #also draw a dot at the start of the arrow
-                cv2.circle(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), 5, arrow_color, -1)
+        origin_thrust,thrust_vector,thrust_direction=data_cot
+        total_thrust=sum(thrust_direction)
+
+        #print("ship_orientation", ship_orientation)
+        origin_thrust.append(origin_thrust.pop(ship_orientation))
+        thrust_vector.append(thrust_vector.pop(ship_orientation))
+        thrust_direction.append(thrust_direction.pop(ship_orientation))
+        size_of_arrow=6
+        #print the vectors
+
+        for i in range(8):
+            start=(origin_thrust[i]+60)*size_factor
+            #print("start", start)
+            start=(round(start.x),round(start.y))
+            #reduce size of vector
+            if(thrust_vector[i].length==0):
+                continue
+            thrust=(thrust_vector[i]-origin_thrust[i])/total_thrust
+            end=thrust*size_of_arrow+origin_thrust[i]
+            end=(end+60)*size_factor
+            #print("end", end)
+            end=(round(end.x),round(end.y))
+            #print(i)
+            if(i==7):
+                arrow_color=[0,200,0]
+            else:
+                arrow_color=[0,255,255]
+            cv2.arrowedLine(img, start,end, arrow_color,2, tipLength=0.2)
+            cv2.circle(img, start, 3, arrow_color, -1)
+        
+        #restore the order of the lists
+        origin_thrust.insert(ship_orientation,origin_thrust.pop())
+        thrust_vector.insert(ship_orientation,thrust_vector.pop())
+        thrust_direction.insert(ship_orientation,thrust_direction.pop())
                 
     #crop image (remove the black border around the ship)
     img=crop(img)
@@ -609,13 +719,33 @@ def com(input_filename, output_filename):
     #read ship.png, extract part data
     parts=cosmoteer_save_tools.Ship(input_filename).data["Parts"]
     #calculate center of mass
-    data = center_of_mass(parts)
-    data=list(data)
-    data.append(top_speed(data[2],total_thrust(parts)))
-    #draw ship
-    print("center of mass: ", com)
-    draw_ship(parts, data, output_filename)#writes to out.png
-    return data
+    comx,comy,mass = list(center_of_mass(parts))
+    data_com = [comx,comy,mass]
+    #calculate center of thrust
+    ship_orientation = cosmoteer_save_tools.Ship(SHIP).data["FlightDirection"]
+    origin_thrust,thrust_vector,thrust_direction=center_of_thrust(parts)
+    origin_thrust,thrust_vector,thrust_direction=diagonal_center_of_thrust(origin_thrust,thrust_vector,thrust_direction)
+    data_cot=[origin_thrust,thrust_vector,thrust_direction]
+    #calculate speed
+    
+    #print("center of thrust: ", data_cot)
+    speed=top_speed(mass,thrust_direction[ship_orientation])
+
+    draw_ship(parts, data_com, data_cot, ship_orientation, output_filename)#writes to out.png
+
+    print("center of mass: ", data_com)
+
+    for i in range(8):
+        print("center of thrust in direction", i, ": ", data_cot[0][i])
+        print("thrust vector in direction", i, ": ", data_cot[1][i])
+        print("thrust in direction", i, ": ", data_cot[2][i])
+        print()
+
+    print("speed: ", speed)
+
+    print("ship_orientation", thrust_direction)
+
+    return data_com, data_cot, speed
 
 if(__name__ == "__main__"):
     com(SHIP, "out.png")
