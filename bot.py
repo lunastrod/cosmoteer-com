@@ -60,6 +60,7 @@ async def version(interaction: discord.Interaction):
 
 @tree.command(name="help", description="shows the list of commands")
 async def help(interaction: discord.Interaction):
+    await interaction.response.defer()
     center_of_mass.draw_legend("legend.png")
     await interaction.followup.send(help_text,file=discord.File("legend.png"))
 
