@@ -35,7 +35,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
     await ship.save('discord_bot\ship.ship.png')
     print("saved, calculating")
     try:
-        data=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
+        data_com, data_cot, speed=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
     except:
         await interaction.followup.send("Error: could not process ship",file=discord.File("discord_bot\ship.ship.png"))
         return
@@ -45,9 +45,9 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         ship = discord.File(s)
         files_to_send: list[discord.File] = [ship,picture]
         text="use the /help command for more info\n"
-        text+="Center of mass: " + str(round(data[0],2)) + ", " + str(round(data[1],2)) + "\n"
-        text+="Total mass: " + str(round(data[2],2)) + "t\n"
-        text+="Predicted max speed: " + str(round(data[3],2)) + "m/s\n"
+        text+="Center of mass: " + str(round(data_com[0],2)) + ", " + str(round(data_com[1],2)) + "\n"
+        text+="Total mass: " + str(round(data_com[2],2)) + "t\n"
+        text+="Predicted max speed: " + str(round(speed,2)) + "m/s\n"
         
         await asyncio.sleep(3)
         await interaction.followup.send(text,files=files_to_send)
