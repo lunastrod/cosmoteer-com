@@ -1,4 +1,14 @@
+#  Bot related files
 secret_token.py
+discord_bot/
+
+# Filetypes
+*ship.png
+
+# here to prevent non-existent file conflicts with code
+!Sion.ship.png
+!engines.ship.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
