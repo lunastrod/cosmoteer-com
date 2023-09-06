@@ -29,7 +29,7 @@ DRAW_ALL_COM=False
 DRAW_COM=True
 DRAW_COT=True
 DRAW_ALL_COT=True
-SHIP="ships\engine.ship.png" #set to the name of your ship.png
+SHIP="ships\Sion.ship.png" #set to the name of your ship.png
 import cv2
 import numpy as np
 
