@@ -718,14 +718,17 @@ def remove_weird_parts(parts):
 
 def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,"draw_all_coms":False}):
     #read ship.png, extract part data
-    parts=cosmoteer_save_tools.Ship(input_filename).data["Parts"]
+    # parts=cosmoteer_save_tools.Ship(input_filename).data["Parts"]
+    decoded_data = cosmoteer_save_tools.Ship(input_filename).data # call savetool only once rather than twice
+    parts = decoded_data["Parts"]
+    ship_orientation = decoded_data["FlightDirection"]
     parts, error_message=remove_weird_parts(parts)
 
     #calculate center of mass
     comx,comy,mass = list(center_of_mass(parts))
     data_com = [comx,comy,mass]
     #calculate center of thrust
-    ship_orientation = cosmoteer_save_tools.Ship(input_filename).data["FlightDirection"]
+    # ship_orientation = cosmoteer_save_tools.Ship(input_filename).data["FlightDirection"]
     origin_thrust,thrust_vector,thrust_direction=center_of_thrust(parts,args)
     origin_thrust,thrust_vector,thrust_direction=diagonal_center_of_thrust(origin_thrust,thrust_vector,thrust_direction)
     data_cot=[origin_thrust,thrust_vector,thrust_direction]
