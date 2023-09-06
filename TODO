@@ -1,10 +1,5 @@
 - command arguments on the Bot
-    - booster thrusters
-    - disable strafe vectors
-- make the bot more reliable
-    - check if a ship is outside of the boundaries
-    - check if it has unknown parts
-    - why does the bot crash sometimes?
+    - fast mode
 - optimize
     - save_tools could be faster
     - make a fast mode that represents the ship as fast as possible, maybe using pixels

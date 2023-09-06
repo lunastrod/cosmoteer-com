@@ -1,5 +1,6 @@
 # The size parameter is the size of the tiles, it doesn't care about turrets or engines
 parts={
+        "cosmoteer.UNKNOWN":{"mass":1, "size":(1,1)},
         "cosmoteer.corridor":{"mass":1, "size":(1,1)},
         "cosmoteer.structure":{"mass":1/3, "size":(1,1)},
         "cosmoteer.structure_wedge":{"mass":1/6, "size":(1,1)},

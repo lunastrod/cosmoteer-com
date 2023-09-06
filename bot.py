@@ -39,29 +39,38 @@ async def on_ready():
     print("Bot is ready")
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment):
+async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, strafecot: bool = True, partcom: bool = False):
     print("defer")
     await interaction.response.defer()
     print("deferred, saving")
-    await ship.save('discord_bot\ship.ship.png')
+    await ship.save('discord_bot/ship.ship.png')
+    #copy legend.png to out.png
+    with open('legend.png', 'rb') as f, open("discord_bot/out.png", "wb") as s:
+        s.write(f.read())
     print("saved, calculating")
     try:
-        data_com, data_cot, speed=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png")#calculate the center of mass
+        args={"boost":boost,"draw_all_cot":strafecot,"draw_all_com":partcom,"draw_cot":True,"draw_com":True}
+        data_com, data_cot, speed, error_msg=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png",args)#calculate the center of mass
     except:
         await interaction.followup.send("Error: could not process ship",file=discord.File("discord_bot\ship.ship.png"))
         return
     print("calculated, sending")
-    with open('discord_bot\out.png', 'rb') as f, open("discord_bot\ship.ship.png", "rb") as s:#send the output image
+    with open('discord_bot/out.png', 'rb') as f, open("discord_bot/ship.ship.png", "rb") as s:#send the output image
         picture = discord.File(f)
         ship = discord.File(s)
         files_to_send: list[discord.File] = [ship,picture]
-        text="use the /help command for more info\n"
+        text=""
+        text+=error_msg
+        text+="use the /help command for more info\n"
         text+="Center of mass: " + str(round(data_com[0],2)) + ", " + str(round(data_com[1],2)) + "\n"
         text+="Total mass: " + str(round(data_com[2],2)) + "t\n"
         text+="Predicted max speed: " + str(round(speed,2)) + "m/s\n"
+
         
         await asyncio.sleep(3)
         await interaction.followup.send(text,files=files_to_send)
+        print(text)
+        print("sent")
         
 
 
