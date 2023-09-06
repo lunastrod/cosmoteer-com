@@ -50,9 +50,9 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
     print("saved, calculating")
     try:
         args={"boost":boost,"draw_all_cot":strafecot,"draw_all_com":partcom,"draw_cot":True,"draw_com":True}
-        data_com, data_cot, speed, error_msg=center_of_mass.com("discord_bot\ship.ship.png", "discord_bot\out.png",args)#calculate the center of mass
+        data_com, data_cot, speed, error_msg=center_of_mass.com("discord_bot/ship.ship.png", "discord_bot/out.png",args)#calculate the center of mass
     except:
-        await interaction.followup.send("Error: could not process ship",file=discord.File("discord_bot\ship.ship.png"))
+        await interaction.followup.send("Error: could not process ship",file=discord.File("discord_bot/ship.ship.png"))
         return
     print("calculated, sending")
     with open('discord_bot/out.png', 'rb') as f, open("discord_bot/ship.ship.png", "rb") as s:#send the output image
