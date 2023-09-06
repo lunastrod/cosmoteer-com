@@ -7,7 +7,7 @@ discord_bot/
 
 # here to prevent non-existent file conflicts with code
 !Sion.ship.png
-!engines.ship.png
+!engine.ship.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
