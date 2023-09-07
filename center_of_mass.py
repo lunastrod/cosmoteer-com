@@ -29,7 +29,7 @@ DRAW_ALL_COM=False
 DRAW_COM=True
 DRAW_COT=True
 DRAW_ALL_COT=True
-SHIP="ships\Sion.ship.png" #set to the name of your ship.png
+SHIP="ships\\nw.png" #set to the name of your ship.png
 import cv2
 import numpy as np
 
@@ -888,7 +888,7 @@ def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,
     decoded_data = cosmoteer_save_tools.Ship(input_filename).data
     parts = decoded_data["Parts"]
     ship_orientation = decoded_data["FlightDirection"]
-
+    
     # Remove weird parts
     parts, error_message = remove_weird_parts(parts)
 
@@ -916,7 +916,29 @@ def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,
         print()
     print("speed: ", speed)
     print(error_message)
-
+    
+    # direction mapping
+    direction_mapping = {
+        0: "NW",
+        1: "N",
+        2: "NE",
+        3: "E",
+        4: "SE",
+        5: "S",
+        6: "SW",
+        7: "W"
+    }
+    print("ship direction: ", direction_mapping[ship_orientation])
+    
+    # Calculate speed in all directions   
+    speeds = {}
+    
+    for ship_orientation, direction in direction_mapping.items():
+        speeds[direction] = top_speed(mass, thrust_direction[ship_orientation])
+    
+    for direction, speed in speeds.items():
+        print(f"speed {direction}: ", speed)
+    # to do : push speed directions to discord, need update to bot.py
     return data_com, data_cot, speed, error_message
 
 if(__name__ == "__main__"):
