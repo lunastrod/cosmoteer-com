@@ -24,6 +24,11 @@ import gzip
 import struct
 import enum
 import io
+from io import BytesIO
+import base64
+import re
+import requests
+
 
 class OBNodeType(enum.Enum):
     Unset = 0
@@ -36,7 +41,18 @@ class OBNodeType(enum.Enum):
 class Ship():
     def __init__(self, image_path) -> None:
         self.image_path = image_path
-        self.image = Image.open(image_path)
+        
+        # read image, base64 image or url
+        input_type = check_input_type(image_path)
+        # print(input_type)
+        if input_type == "base64":
+            self.image = Image.open(BytesIO(base64.b64decode(image_path))) # read base64 string
+        elif input_type == "file_path":
+            self.image = Image.open(image_path)
+        elif input_type == "url":
+            response = requests.get(image_path)
+            self.image = Image.open(BytesIO(response.content))
+        
         self.image_data = np.array(self.image.getdata())
 
         self.compressed_image_data = self.read_bytes()
@@ -298,7 +314,29 @@ if(JSON_ON):
                 # wrapped in a special dictionary:
                 return {'__bytes__': obj.decode('latin1')}
             return json.JSONEncoder.default(self, obj)
-    
+def check_input_type(input_value):
+    # Check if it's a valid base64 string
+    try:
+        if base64.b64encode(base64.b64decode(input_value)) == input_value.encode():
+            return "base64"
+    except Exception:
+        pass
+
+    # Check if it's a valid file path (assuming it's on your server)
+    if re.match(r'^[A-Za-z0-9_./-]*$', input_value):
+        return "file_path"
+
+    # Check if it's a valid URL
+    print(input_value)
+    url_pattern = re.compile(r'^https?://\S+$')
+    if url_pattern.match(input_value):
+    # url_pattern = re.compile(r'^https?://\S+$')
+    # if url_pattern.match(input_value):
+        return "url"
+
+    # If none of the above, return "unknown"
+    return "unknown"        
+        
 if(__name__ == "__main__"):
     if(JSON_ON):
         with open("out.json", "w") as f:
