@@ -606,231 +606,269 @@ def crop(image, margin=10):
     return image[ymin:ymax, xmin:xmax]
 
 def draw_legend(output_filename):
+    """
+    Draw a legend image with arrows, circles, and text.
     
-    line_sep=40
-    left_margin=300
-    img = np.zeros((line_sep*5,600,3), np.uint8)
-    #draw a green arrow, a yellow arrow, a red arrow, a green circle
-    cv2.arrowedLine(img, (left_margin, line_sep*1), (left_margin+100, line_sep*1), [0,255,0], 3, tipLength=0.3)
-    cv2.arrowedLine(img, (left_margin, line_sep*2), (left_margin+100, line_sep*2), [0,255,255], 3, tipLength=0.3)
-    cv2.arrowedLine(img, (left_margin, line_sep*3), (left_margin+100, line_sep*3), [0,0,255], 3, tipLength=0.3)
-    cv2.circle(img, (left_margin, line_sep*4), 10, [0,255,0], -1)
-    #draw a dots size 6 at the start of the arrows
-    cv2.circle(img, (left_margin, line_sep*1), 6, [0,255,0], -1)
-    cv2.circle(img, (left_margin, line_sep*2), 6, [0,255,255], -1)
-    cv2.circle(img, (left_margin, line_sep*3), 6, [0,0,255], -1)
-    #add text
+    Args:
+        output_filename (str): The filename to save the legend image.
+    """
+
+    # Set up parameters
+    line_sep = 40
+    left_margin = 300
+
+    # Create an empty image
+    img = np.zeros((line_sep * 5, 600, 3), np.uint8)
+
+    # Draw arrows and circles
+    cv2.arrowedLine(img, (left_margin, line_sep * 1), (left_margin + 100, line_sep * 1), [0, 255, 0], 3, tipLength=0.3)
+    cv2.arrowedLine(img, (left_margin, line_sep * 2), (left_margin + 100, line_sep * 2), [0, 255, 255], 3, tipLength=0.3)
+    cv2.arrowedLine(img, (left_margin, line_sep * 3), (left_margin + 100, line_sep * 3), [0, 0, 255], 3, tipLength=0.3)
+    cv2.circle(img, (left_margin, line_sep * 4), 10, [0, 255, 0], -1)
+
+    # Draw dots at the start of the arrows
+    cv2.circle(img, (left_margin, line_sep * 1), 6, [0, 255, 0], -1)
+    cv2.circle(img, (left_margin, line_sep * 2), 6, [0, 255, 255], -1)
+    cv2.circle(img, (left_margin, line_sep * 3), 6, [0, 0, 255], -1)
+
+    # Add text
     font = cv2.FONT_HERSHEY_SIMPLEX
-    #center of mass next to green circle
-    cv2.putText(img,'Center of Mass',(left_margin+20,line_sep*4+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
-    #add white thin arrow from text to circle
-    cv2.arrowedLine(img, (left_margin+20, line_sep*4), (left_margin, line_sep*4), [255,255,255], 2, tipLength=0.2)
-    #center of thrust to the left of green arrow
-    cv2.putText(img,'Center of Thrust',(left_margin-200,line_sep*1+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
-    #add white thin arrow from text to start of green arrow
-    cv2.arrowedLine(img, (left_margin-50, line_sep*1), (left_margin, line_sep*1), [255,255,255], 2, tipLength=0.2)
-    #strafe center of thrust to the left of yellow arrow
-    cv2.putText(img,'Strafe Center of Thrust',(left_margin-250,line_sep*2+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
-    #add white thin arrow from text to start of yellow arrow
-    cv2.arrowedLine(img, (left_margin-50, line_sep*2), (left_margin, line_sep*2), [255,255,255], 2, tipLength=0.2)
-    #engine center of thrust to the left of red arrow
+
+    # Center of mass next to green circle
+    cv2.putText(img, 'Center of Mass', (left_margin + 20, line_sep * 4 + 5), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # Add white thin arrow from text to circle
+    cv2.arrowedLine(img, (left_margin + 20, line_sep * 4), (left_margin, line_sep * 4), [255, 255, 255], 2, tipLength=0.2)
+
+    # Center of thrust to the left of green arrow
+    cv2.putText(img, 'Center of Thrust', (left_margin - 200, line_sep * 1 + 5), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # Add white thin arrow from text to start of green arrow
+    cv2.arrowedLine(img, (left_margin - 50, line_sep * 1), (left_margin, line_sep * 1), [255, 255, 255], 2, tipLength=0.2)
+
+    # Strafe center of thrust to the left of yellow arrow
+    cv2.putText(img, 'Strafe Center of Thrust', (left_margin - 250, line_sep * 2 + 5), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # Add white thin arrow from text to start of yellow arrow
+    cv2.arrowedLine(img, (left_margin - 50, line_sep * 2), (left_margin, line_sep * 2), [255, 255, 255], 2, tipLength=0.2)
+
+    # Draw the text for the engine center of thrust to the left of the red arrow
     cv2.putText(img,'Engine Center of Thrust',(left_margin-250,line_sep*3+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
-    #add white thin arrow from text to start of red arrow
+    # Add a white thin arrow from the text to the start of the red arrow    
     cv2.arrowedLine(img, (left_margin-50, line_sep*3), (left_margin, line_sep*3), [255,255,255], 2, tipLength=0.2)
-    #to the right of the arrows, add "length of arrow depends on thrust" on 3 lines
+    # Add the text "length of vector" on three lines to the right of the arrows
     cv2.putText(img,'length of vector',(left_margin+120,line_sep*1+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
     cv2.putText(img,'depends on thrust',(left_margin+120,line_sep*2+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
     cv2.putText(img,'on that direction',(left_margin+120,line_sep*3+5), font, 0.5,(255,255,255),1,cv2.LINE_AA)
-    #save the image
+    # Save the image
     cv2.imwrite(output_filename, img)
-    #show the image
-    #cv2.imshow('image',img)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+
 
 def draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args):
-    #use opencv to draw ship
-    #create blank image factor times of the ship
+    """
+    Draw a ship using OpenCV.
+    Args:
+    - parts: a list of ship parts
+    - data_com: the center of mass data
+    - data_cot: the center of thrust data
+    - ship_orientation: the orientation of the ship
+    - output_filename: the filename to save the image
+    - args: additional arguments
+    Returns:
+    - an empty string if the image was successfully saved
+    """
+    # Define constants
     sprite_square_size = 64
-    size_factor = round(sprite_square_size/4)
+    size_factor = round(sprite_square_size / 4)
     square_size = round(size_factor)
-    img = np.zeros((120*size_factor,120*size_factor,3), np.uint8)
-
-    """
-    BLUE_PARTS= ["cosmoteer.shield_gen_small","cosmoteer.shield_gen_large","cosmoteer.control_room_small","cosmoteer.control_room_med","cosmoteer.control_room_large", "cosmoteer.armor", "cosmoteer.armor_2x1","cosmoteer.armor_wedge","cosmoteer.armor_1x2_wedge","cosmoteer.armor_1x3_wedge","cosmoteer.armor_tri","cosmoteer.armor_structure_hybrid_1x1","cosmoteer.armor_structure_hybrid_1x2","cosmoteer.armor_structure_hybrid_1x3","cosmoteer.armor_structure_hybrid_tri"]
-    GREY_PARTS= ["cosmoteer.structure","cosmoteer.structure_wedge","cosmoteer.structure_1x2_wedge","cosmoteer.structure_1x3_wedge","cosmoteer.structure_tri","cosmoteer.corridor","cosmoteer.fire_extinguisher","cosmoteer.airlock","cosmoteer.crew_quarters_small","cosmoteer.crew_quarters_med","cosmoteer.conveyor","cosmoteer.storage_2x2","cosmoteer.storage_3x2","cosmoteer.storage_3x3","cosmoteer.storage_4x3","cosmoteer.storage_4x4"]
-    THRUSTERS= ["cosmoteer.thruster_small","cosmoteer.thruster_med","cosmoteer.thruster_large","cosmoteer.thruster_small_2way","cosmoteer.thruster_small_3way","cosmoteer.thruster_huge","cosmoteer.thruster_boost"]
-    YELLOW_PARTS= THRUSTERS+["cosmoteer.power_storage","cosmoteer.engine_room","cosmoteer.reactor_small","cosmoteer.reactor_med","cosmoteer.reactor_large"]
-    RED_PARTS= ["cosmoteer.laser_blaster_small","cosmoteer.laser_blaster_large","cosmoteer.disruptor","cosmoteer.ion_beam_emitter","cosmoteer.ion_beam_prism","cosmoteer.tractor_beam_emitter","cosmoteer.point_defense","cosmoteer.mining_laser_small","cosmoteer.cannon_med","cosmoteer.cannon_large","cosmoteer.cannon_deck","cosmoteer.explosive_charge","cosmoteer.missile_launcher","cosmoteer.railgun_loader","cosmoteer.railgun_accelerator","cosmoteer.railgun_launcher","cosmoteer.flak_cannon_large"]
-    #add parts to image
-    for part in parts:
-        x_coord = part["Location"][0] +60
-        y_coord = part["Location"][1] +60
-        if(part["ID"] in THRUSTERS and thruster_touching_engine_room(parts,part)):
-            color = [0,200,200] #thrusters touching engine room are light yellow
-        elif(part["ID"] in BLUE_PARTS):
-            color = [125,0,0]#armor shields and control rooms are blue
-        elif(part["ID"] in GREY_PARTS):
-            color = [125,125,125]#structure and hull is grey
-        elif(part["ID"] in YELLOW_PARTS):
-            color = [0, 125, 125]#thrusters and reactors are yellow
-        elif(part["ID"] in RED_PARTS):
-            color=[0,0,125]#weapons are red
-        else:
-            color = [125,0,125]#everything else is purple
-        size=part_data.parts[part["ID"]]["size"]
-        rotation=part["Rotation"]
-        if(rotation==1 or rotation==3):
-            size=(size[1],size[0])
-        #size=(1,1)
-        
-        
-        for i in range(size[0]):
-            for j in range(size[1]):
-                cv2.rectangle(img, (round((x_coord+i)*size_factor+1), round((y_coord+j)*size_factor+1)),
-                                (round((x_coord+i+1)*size_factor-1), round((y_coord+j+1)*size_factor-1)),
-                                color, -1)
-    """
-
-    #using sprites instead of rectangles
+    # Create a blank image
+    img = np.zeros((120 * size_factor, 120 * size_factor, 3), np.uint8)
+    # Rearrange parts to draw top turrets last
     for i in range(len(parts)):
-        if(parts[i]["ID"] in ["cosmoteer.cannon_deck","cosmoteer.ion_beam_prism"]):
-            parts.append(parts.pop(i))#move top turrets to the end of the list so they are drawn last
+        if parts[i]["ID"] in ["cosmoteer.cannon_deck", "cosmoteer.ion_beam_prism"]:
+            parts.append(parts.pop(i))
+    # Draw ship parts
     for part in parts:
-        x_coord = part["Location"][0] +60
-        y_coord = part["Location"][1] +60
-        if(x_coord<0 or x_coord>120 or y_coord<0 or y_coord>120):
+        x_coord = part["Location"][0] + 60
+        y_coord = part["Location"][1] + 60
+        # Check if part is out of bounds
+        if x_coord < 0 or x_coord > 120 or y_coord < 0 or y_coord > 120:
             return "error drawing ship: out of bounds\n"
-        size=part_data.parts[part["ID"]]["size"]
-        rotation=part["Rotation"]
-        flipx=part.get("FlipX",0)
-
-        x_coord,y_coord=sprite_position(part, [x_coord, y_coord])
-
-        sprite_path="sprites/"+part["ID"].replace("cosmoteer.","")+".png"
+        size = part_data.parts[part["ID"]]["size"]
+        rotation = part["Rotation"]
+        flipx = part.get("FlipX", 0)
+        x_coord, y_coord = sprite_position(part, [x_coord, y_coord])
+        sprite_path = "sprites/" + part["ID"].replace("cosmoteer.", "") + ".png"
         img_part = cv2.imread(sprite_path, cv2.IMREAD_UNCHANGED)
-        #print(img_part.shape)
-        insert_sprite(img, img_part, round(x_coord*size_factor),round(y_coord*size_factor) , rotation,flipx, (round(img_part.shape[1]/4), round(img_part.shape[0]/4)))
-    #the image should be a bit darker
-    img=img*0.8
-
-    if(args["draw_com"]):
-        #add center of mass (as a green circle)
-        cv2.circle(img, (round((data_com[0]+60)*size_factor), round((data_com[1]+60)*size_factor)), square_size, [0,255,0], -1)
-        if(args["draw_all_com"]):
-            #add center of mass of each part (as a green circle)
+        insert_sprite(img, img_part, round(x_coord * size_factor), round(y_coord * size_factor), rotation, flipx,
+                      (round(img_part.shape[1] / 4), round(img_part.shape[0] / 4)))
+    # Darken the image
+    img = img * 0.8
+    if args["draw_com"]:
+        # Add center of mass
+        cv2.circle(img, (round((data_com[0] + 60) * size_factor), round((data_com[1] + 60) * size_factor)), square_size,
+                   [0, 255, 0], -1)
+        if args["draw_all_com"]:
+            # Add center of mass of each part
             for part in parts:
-                x_coord,y_coord=part_center_of_mass(part)
-                cv2.circle(img, (round((x_coord+60)*size_factor), round((y_coord+60)*size_factor)), 1, [0,255,0], -1)
-
-    if(args["draw_all_cot"]):
-        #add center of thrust of each part (as a red circle)
+                x_coord, y_coord = part_center_of_mass(part)
+                cv2.circle(img, (round((x_coord + 60) * size_factor), round((y_coord + 60) * size_factor)), 1,
+                           [0, 255, 0], -1)
+    if args["draw_all_cot"]:
+        # Add center of thrust of each part
         for part in parts:
-            cots=part_center_of_thrust(part,args["boost"])
-            if(cots==0):
+            cots = part_center_of_thrust(part, args["boost"])
+            if cots == 0:
                 continue
             for cot in cots:
-                #cv2.circle(img, (round((cot[0]+60)*size_factor), round((cot[1]+60)*size_factor)), 1, [0,0,255], -1)
                 part_rotation = cot[1]
-                vector=cot[0]
-                end_point = (0,0)
-                size=cot[2]/2000
-                if(part_rotation==0):
-                    end_point = (vector.x, vector.y-size)
-                elif(part_rotation==1):
-                    end_point = (vector.x+size, vector.y)
-                elif(part_rotation==2):
+                vector = cot[0]
+                end_point = (0, 0)
+                size = cot[2] / 2000
+                if part_rotation == 0:
+                    end_point = (vector.x, vector.y - size)
+                elif part_rotation == 1:
+                    end_point = (vector.x + size, vector.y)
+                elif part_rotation == 2:
                     end_point = (vector.x, vector.y+size)
-                elif(part_rotation==3):
-                    end_point = (vector.x-size, vector.y)
-                
+                elif part_rotation == 3:
+                    end_point = (vector.x - size, vector.y)
+                # Draw a line
                 cv2.arrowedLine(img, (round((vector.x+60)*size_factor), round((vector.y+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
-                #also draw a dot at the start of the arrow
+                # Also draw a dot at the start of the arrow
                 cv2.circle(img, (round((vector.x+60)*size_factor), round((vector.y+60)*size_factor)), 3, [0,0,255], -1)
     
-    #draw center of thrust of the ship
-    if(args["draw_cot"]):
-        origin_thrust,thrust_vector,thrust_direction=data_cot
-        total_thrust=sum(thrust_direction)
+    # Draw center of thrust of the ship
+    if args["draw_cot"]:
+        origin_thrust, thrust_vector, thrust_direction = data_cot
+        total_thrust = sum(thrust_direction)
 
-        #print("ship_orientation", ship_orientation)
         origin_thrust.append(origin_thrust.pop(ship_orientation))
         thrust_vector.append(thrust_vector.pop(ship_orientation))
         thrust_direction.append(thrust_direction.pop(ship_orientation))
-        size_of_arrow=35
-        #print the vectors
+        size_of_arrow = 35
 
         for i in range(8):
-            if(not args["draw_all_cot"] and i!=7):
+            if not args["draw_all_cot"] and i != 7:
                 continue
-            start=(origin_thrust[i]+60)*size_factor
-            #print("start", start)
-            start=(round(start.x),round(start.y))
-            if(thrust_direction[i]==0):
+            start = (origin_thrust[i] + 60) * size_factor
+            start = (round(start.x), round(start.y))
+            if thrust_direction[i] == 0:
                 continue
-            thrust=(thrust_vector[i]-origin_thrust[i])/total_thrust
-            end=thrust*size_of_arrow+origin_thrust[i]
-            end=(end+60)*size_factor
-            #print("end", end)
-            end=(round(end.x),round(end.y))
-            #print(i)
-            if(i==7):
-                arrow_color=[0,200,0]
+            thrust = (thrust_vector[i] - origin_thrust[i]) / total_thrust
+            end = thrust * size_of_arrow + origin_thrust[i]
+            end = (end + 60) * size_factor
+            end = (round(end.x), round(end.y))
+            if i == 7:
+                arrow_color = [0, 200, 0]
             else:
-                arrow_color=[0,255,255]
-            cv2.arrowedLine(img, start,end, arrow_color,2, tipLength=0.2)
+                arrow_color = [0, 255, 255]
+            # draw a line
+            cv2.arrowedLine(img, start, end, arrow_color, 2, tipLength=0.2)
+            # draw a dot
             cv2.circle(img, start, 3, arrow_color, -1)
-        
-        #restore the order of the lists
-        origin_thrust.insert(ship_orientation,origin_thrust.pop())
-        thrust_vector.insert(ship_orientation,thrust_vector.pop())
-        thrust_direction.insert(ship_orientation,thrust_direction.pop())
-                
-    #crop image (remove the black border around the ship)
-    img=crop(img)
 
-    #save image
+        origin_thrust.insert(ship_orientation, origin_thrust.pop())
+        thrust_vector.insert(ship_orientation, thrust_vector.pop())
+        thrust_direction.insert(ship_orientation, thrust_direction.pop())
+
+    # Crop the image
+    img = crop(img)
+    # Save the image
     cv2.imwrite(output_filename, img)
     return ""
 
 def remove_weird_parts(parts):
-    #remove parts that are not in the part_data
-    unknown_parts=set()
-    classic=False
-    new_parts=[]
+    """
+    Removes parts from the given list that are not present in the part_data.
+    Replaces certain old part IDs with their corresponding new part IDs.
+    Returns the updated list of parts and any error messages encountered.
+    """
+    # Set to store unknown part IDs
+    unknown_parts = set()
+
+    # Boolean flag to indicate if classic ships are present
+    classic = False
+
+    # List to store the updated parts
+    new_parts = []
+
+    # Iterate over each part in the given list
     for part in parts:
-        if(part["ID"] in part_data.parts):
+        # Check if the part ID is present in part_data
+        if part["ID"] in part_data.parts:
             new_parts.append(part)
         else:
-            old_factories=["cosmoteer.ammo_factory","cosmoteer.missile_factory_nuke","cosmoteer.missile_factory_he"]
-            new_factories=["cosmoteer.factory_ammo","cosmoteer.factory_nuke","cosmoteer.factory_he"]
-            if(part["ID"] in old_factories):
-                part["ID"]=new_factories[old_factories.index(part["ID"])]
+            # List of old factory IDs and their corresponding new factory IDs
+            old_factories = [
+                "cosmoteer.ammo_factory",
+                "cosmoteer.missile_factory_nuke",
+                "cosmoteer.missile_factory_he"
+            ]
+            new_factories = [
+                "cosmoteer.factory_ammo",
+                "cosmoteer.factory_nuke",
+                "cosmoteer.factory_he"
+            ]
+
+            # Check if the part ID is in the old_factories list
+            if part["ID"] in old_factories:
+                # Replace the part ID with its corresponding new factory ID
+                part["ID"] = new_factories[old_factories.index(part["ID"])]
                 new_parts.append(part)
-                classic=True
+                classic = True
                 continue
-            old_mirror_L=["cosmoteer.structure_1x2_wedge_L","cosmoteer.structure_1x3_wedge_L","cosmoteer.armor_1x2_wedge_L","cosmoteer.armor_1x3_wedge_L"]
-            old_mirror_R=["cosmoteer.structure_1x2_wedge_R","cosmoteer.structure_1x3_wedge_R","cosmoteer.armor_1x2_wedge_R","cosmoteer.armor_1x3_wedge_R"]
-            if(part["ID"] in old_mirror_L):
-                part["ID"]=part["ID"][:-2]
-                part["FlipX"]=0
+
+            # List of old mirror L IDs and their corresponding updated IDs
+            old_mirror_L = [
+                "cosmoteer.structure_1x2_wedge_L",
+                "cosmoteer.structure_1x3_wedge_L",
+                "cosmoteer.armor_1x2_wedge_L",
+                "cosmoteer.armor_1x3_wedge_L"
+            ]
+
+            # List of old mirror R IDs and their corresponding updated IDs
+            old_mirror_R = [
+                "cosmoteer.structure_1x2_wedge_R",
+                "cosmoteer.structure_1x3_wedge_R",
+                "cosmoteer.armor_1x2_wedge_R",
+                "cosmoteer.armor_1x3_wedge_R"
+            ]
+
+            # Check if the part ID is in the old_mirror_L list
+            if part["ID"] in old_mirror_L:
+                # Update the part ID and FlipX value
+                part["ID"] = part["ID"][:-2]
+                part["FlipX"] = 0
                 new_parts.append(part)
-                classic=True
+                classic = True
                 continue
-            if(part["ID"] in old_mirror_R):
-                part["ID"]=part["ID"][:-2]
-                part["FlipX"]=1
+
+            # Check if the part ID is in the old_mirror_R list
+            if part["ID"] in old_mirror_R:
+                # Update the part ID and FlipX value
+                part["ID"] = part["ID"][:-2]
+                part["FlipX"] = 1
                 new_parts.append(part)
-                classic=True
+                classic = True
                 continue
+
+            # Add the unknown part ID to the set
             unknown_parts.add(part["ID"])
-            part["ID"]="cosmoteer.UNKNOWN"
+
+            # Update the part ID to "cosmoteer.UNKNOWN"
+            part["ID"] = "cosmoteer.UNKNOWN"
             new_parts.append(part)
-    error_msg=""
+
+    # Generate the error message for unknown parts
+    error_msg = ""
     for part in unknown_parts:
-        error_msg+="unknown part: "+part+"\n"
-    if (classic):
-        error_msg+="classic ships are not supported, com and cot may be wrong\n"
+        error_msg += "unknown part: " + part + "\n"
+
+    # Check if classic ships are present and add error message accordingly
+    if classic:
+        error_msg += "classic ships are not supported, com and cot may be wrong\n"
+
     return new_parts, error_msg
 
 def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,"draw_all_coms":False}):
