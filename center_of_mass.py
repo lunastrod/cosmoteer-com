@@ -717,36 +717,48 @@ def remove_weird_parts(parts):
     return new_parts, error_msg
 
 def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,"draw_all_coms":False}):
-    #read ship.png, extract part data
-    # parts=cosmoteer_save_tools.Ship(input_filename).data["Parts"]
-    decoded_data = cosmoteer_save_tools.Ship(input_filename).data # call savetool only once rather than twice
+    """
+    Calculate the center of mass, center of thrust, and speed of a ship.
+
+    Args:
+        input_filename (str): The filename of the ship data.
+        output_filename (str): The filename of the output image.
+        args (dict, optional): Additional arguments. Defaults to {"boost":True,"draw_all_cot":True,"draw_all_coms":False}.
+
+    Returns:
+        tuple: A tuple containing the center of mass, center of thrust, speed, and error message.
+
+    """
+    # Read ship data and extract part data
+    decoded_data = cosmoteer_save_tools.Ship(input_filename).data
     parts = decoded_data["Parts"]
     ship_orientation = decoded_data["FlightDirection"]
-    parts, error_message=remove_weird_parts(parts)
 
-    #calculate center of mass
-    comx,comy,mass = list(center_of_mass(parts))
-    data_com = [comx,comy,mass]
-    #calculate center of thrust
-    # ship_orientation = cosmoteer_save_tools.Ship(input_filename).data["FlightDirection"]
-    origin_thrust,thrust_vector,thrust_direction=center_of_thrust(parts,args)
-    origin_thrust,thrust_vector,thrust_direction=diagonal_center_of_thrust(origin_thrust,thrust_vector,thrust_direction)
-    data_cot=[origin_thrust,thrust_vector,thrust_direction]
-    #calculate speed
-    
-    #print("center of thrust: ", data_cot)
-    speed=top_speed(mass,thrust_direction[ship_orientation])
+    # Remove weird parts
+    parts, error_message = remove_weird_parts(parts)
 
-    error_message+=draw_ship(parts, data_com, data_cot, ship_orientation, output_filename,args)#writes to out.png
+    # Calculate center of mass
+    comx, comy, mass = list(center_of_mass(parts))
+    data_com = [comx, comy, mass]
 
+    # Calculate center of thrust
+    origin_thrust, thrust_vector, thrust_direction = center_of_thrust(parts, args)
+    origin_thrust, thrust_vector, thrust_direction = diagonal_center_of_thrust(origin_thrust, thrust_vector, thrust_direction)
+    data_cot = [origin_thrust, thrust_vector, thrust_direction]
+
+    # Calculate speed
+    speed = top_speed(mass, thrust_direction[ship_orientation])
+
+    # Draw ship and write to output image
+    error_message += draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args)
+
+    # Print results
     print("center of mass: ", data_com)
-
     for i in range(8):
         print("center of thrust in direction", i, ": ", data_cot[0][i])
         print("thrust vector in direction", i, ": ", data_cot[1][i])
         print("thrust in direction", i, ": ", data_cot[2][i])
         print()
-
     print("speed: ", speed)
     print(error_message)
 
