@@ -327,7 +327,7 @@ def check_input_type(input_value):
         return "file_path"
 
     # Check if it's a valid URL
-    print(input_value)
+    # print(input_value)
     url_pattern = re.compile(r'^https?://\S+$')
     if url_pattern.match(input_value):
     # url_pattern = re.compile(r'^https?://\S+$')
