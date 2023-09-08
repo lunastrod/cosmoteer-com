@@ -6,6 +6,8 @@ import os
 import center_of_mass
 import base64
 from io import BytesIO
+import requests
+import json
 
 load_dotenv()
 
@@ -56,54 +58,84 @@ async def on_ready():
     print("Bot is ready")
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, strafecot: bool = True, partcom: bool = False):
-    # Defer the initial response to let the user know the command is being processed
+async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, draw_all_cot: bool = True, draw_all_com: bool = False, draw_cot: bool = True, draw_com: bool = True, draw: bool = True):
+    """
+    Calculates the center of mass of a cosmoteer ship.png.
+
+    Parameters:
+    - interaction: The Discord interaction object.
+    - ship: The attached image of the ship.
+    - boost: Whether to apply boost.
+    - draw_all_cot: Whether to draw all center of thrust lines.
+    - draw_all_com: Whether to draw all center of mass lines.
+    - draw_cot: Whether to draw center of thrust lines.
+    - draw_com: Whether to draw center of mass lines.
+    - draw: Whether to draw the output images.
+    """
+    
     await interaction.response.defer()
 
-    # Read the image bytes from the attachment
+    # Read the image bytes and encode them to base64
     image_bytes = await ship.read()
-
-    # Encode the image bytes in base64 format
     base64_string = base64.b64encode(image_bytes).decode('utf-8')
 
     try:
-        # Prepare the arguments for the center_of_mass calculation
-        args = {"boost": boost, "draw_all_cot": strafecot, "draw_all_com": partcom, "draw_cot": True, "draw_com": True}
+        # Prepare the request data
+        args = {
+            "boost": boost,
+            "draw_all_cot": draw_all_cot,
+            "draw_all_com": draw_all_com,
+            "draw_cot": draw_cot,
+            "draw_com": draw_com,
+            "draw": draw
+        }
+        json_data = json.dumps({'image': base64_string, 'args': args})
 
-        # Call the center_of_mass function with the base64 string and the arguments
-        data_com, data_cot, speed, error_msg, base64_output = center_of_mass.com(base64_string, "", args)
-    except Exception as e:
-        # Print the error message and return if an exception occurs
+        # Send the request to the server
+        url = 'https://cosmo-api-six.vercel.app/analyze'
+        response = requests.post(url, json=json_data)
+        response.raise_for_status()
+        
+        # Create a file object for the original image
+        ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
+
+        # Get the response
+        data_returned = response.json()
+        # if draw is false do not retrieve the center of mass image
+        if draw == True:
+            # Get the URL of the center of mass image
+            
+            url_com = data_returned['url_com']
+
+            # Fetch the center of mass image
+            response_url_com = requests.get(url_com)
+            response_url_com.raise_for_status()
+            content_response = response_url_com.content
+
+            # Create a file object for the center of mass image
+            picture = discord.File(BytesIO(content_response), filename="output_file.png")
+            
+            # Prepare the list of files to send
+            files_to_send = [ship, picture]
+        else:
+            # Prepare the list of files to send
+            files_to_send = [ship]
+
+
+        # Prepare the text response
+        text = "use the /help command for more info\n"
+        text += f"Center of mass: {round(data_returned['center_of_mass_x'], 2)}, {round(data_returned['center_of_mass_y'], 2)}\n"
+        text += f"Total mass: {round(data_returned['total_mass'], 2)}t\n"
+        text += f"Predicted max speed: {round(data_returned['top_speed'], 2)}m/s\n"
+
+        # Send the text response and files
+        await interaction.followup.send(text, files=files_to_send)
+
+    except requests.exceptions.RequestException as e:
         print(e)
-        print("Error: could not process ship")
+        text = "Error: could not process ship :"+str(e)
+        await interaction.followup.send(text, files=files_to_send)
         return "Error: could not process ship"
-
-    # Decode the base64 output into bytes
-    decoded_bytes = base64.b64decode(base64_output)
-
-    # Create a BytesIO stream for the output file
-    file_stream = BytesIO(decoded_bytes)
-
-    # Create a BytesIO stream for the input file
-    file_stream_in = BytesIO(image_bytes)
-
-    # Create discord.File objects for the output and input files
-    picture = discord.File(file_stream, filename="output_file.png")
-    ship = discord.File(file_stream_in, filename="input_file.png")
-    
-    # Prepare the list of files to send in the response
-    files_to_send = [ship, picture]
-    
-    # Prepare the text response
-    text = ""
-    text += error_msg
-    text += "use the /help command for more info\n"
-    text += "Center of mass: " + str(round(data_com[0], 2)) + ", " + str(round(data_com[1], 2)) + "\n"
-    text += "Total mass: " + str(round(data_com[2], 2)) + "t\n"
-    text += "Predicted max speed: " + str(round(speed, 2)) + "m/s\n"
-
-    # Send the response with the text and files
-    await interaction.followup.send(text, files=files_to_send)
         
 
 
