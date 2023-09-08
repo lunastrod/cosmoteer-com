@@ -158,7 +158,7 @@ class Ship():
             if byte & 0x80 == 0:
                 break
             if i>2:
-                print("Warning: string length is too long")
+                # print("Warning: string length is too long")
                 break
             i += 1
 
@@ -214,11 +214,11 @@ class Ship():
                         value = struct.unpack('<i', value)[0]
                     elif key == 'DefaultAttackRotation':
                         value = struct.unpack('<f', value)[0]
-                        print(self.image_path)
-                        print('DefaultAttackRotation: ', value)
+                        # print(self.image_path)
+                        # print('DefaultAttackRotation: ', value)
                     elif key == 'DefaultAttackRadius':
                         value = struct.unpack('<I', value)[0]
-                        print('DefaultAttackRadius: ', value)
+                        # print('DefaultAttackRadius: ', value)
                     elif key == 'Value' and len(value) == 4:
                         value = struct.unpack('<I', value)[0]
                     elif key in ('Location', 'Cell', "Key") and len(value) == 8:
@@ -234,7 +234,8 @@ class Ship():
                         c4 = value[12:16].hex().upper()
                         value = (c1, c2, c3, c4)
                     else:
-                        print('Unhandled key with binary value:', {key: value})
+                        # print('Unhandled key with binary value:', {key: value})
+                        continue
 
                 d[key] = value
             return d
