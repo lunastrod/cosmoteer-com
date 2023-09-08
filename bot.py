@@ -24,7 +24,7 @@ help_text="""
     - partcom: draws the center of mass of each part. Default: off
 
 - common questions:
-    - does the bot consider the 5% lateral thrust of each thruster? yes
+    - does the bot consider the 5%% lateral thrust of each thruster? yes
     - does the bot consider engine room buff? yes
     - is the cot exact? it should be
     - is the com exact? no, it's a decent approximation, it should be inside the green circle
