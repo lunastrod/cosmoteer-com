@@ -29,7 +29,8 @@ DRAW_ALL_COM=False
 DRAW_COM=True
 DRAW_COT=True
 DRAW_ALL_COT=True
-SHIP="ships\\nw.png" #set to the name of your ship.png
+FLIP_VECTORS=False
+SHIP="ships/Sion.ship.png" #set to the name of your ship.png
 import cv2
 import numpy as np
 
@@ -575,6 +576,7 @@ def sprite_position(part, position):
 def crop(image, margin=10):
     """
     Crop the given image based on the non-zero pixel values.
+    The image is a square with the ship in the center.
 
     Args:
         image (numpy.ndarray): The input image.
@@ -592,6 +594,16 @@ def crop(image, margin=10):
     ymin = np.min(y_nonzero) - margin
     ymax = np.max(y_nonzero) + margin
 
+    # Make sure the image is a square
+    if xmax - xmin > ymax - ymin:
+        margin=round((xmax-xmin)/2)-round((ymax-ymin)/2)
+        ymax += margin
+        ymin -= margin
+    elif ymax - ymin > xmax - xmin:
+        margin=round((ymax-ymin)/2)-round((xmax-xmin)/2)
+        xmax += margin
+        xmin -= margin
+
     # Adjust the min/max values if they exceed the image boundaries
     if xmin < 0:
         xmin = 0
@@ -604,6 +616,9 @@ def crop(image, margin=10):
 
     # Crop the image based on the calculated min/max values
     return image[ymin:ymax, xmin:xmax]
+
+
+
 
 def draw_legend(output_filename):
     """
@@ -733,6 +748,9 @@ def draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args
                     end_point = (vector.x, vector.y+size)
                 elif part_rotation == 3:
                     end_point = (vector.x - size, vector.y)
+                #flip the direction of the arrow
+                if(args["flip_vectors"]):
+                    end_point = (vector.x * 2 - end_point[0], vector.y * 2 - end_point[1])
                 # Draw a line
                 cv2.arrowedLine(img, (round((vector.x+60)*size_factor), round((vector.y+60)*size_factor)), (round((end_point[0]+60)*size_factor), round((end_point[1]+60)*size_factor)), [0,0,255], 2, tipLength=0.3)
                 # Also draw a dot at the start of the arrow
@@ -750,12 +768,15 @@ def draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args
 
         for i in range(8):
             if not args["draw_all_cot"] and i != 7:
-                continue
+                continue            
             start = (origin_thrust[i] + 60) * size_factor
             start = (round(start.x), round(start.y))
             if thrust_direction[i] == 0:
                 continue
             thrust = (thrust_vector[i] - origin_thrust[i]) / total_thrust
+            #flip the direction of the arrow
+            if(args["flip_vectors"]):
+                thrust = thrust * -1
             end = thrust * size_of_arrow + origin_thrust[i]
             end = (end + 60) * size_factor
             end = (round(end.x), round(end.y))
@@ -799,22 +820,24 @@ def remove_weird_parts(parts):
         if part["ID"] in part_data.parts:
             new_parts.append(part)
         else:
-            # List of old factory IDs and their corresponding new factory IDs
-            old_factories = [
+            # List of old part IDs and their corresponding new part IDs
+            old_part_ids = [
                 "cosmoteer.ammo_factory",
                 "cosmoteer.missile_factory_nuke",
-                "cosmoteer.missile_factory_he"
+                "cosmoteer.missile_factory_he",
+                "cosmoteer.electro_bolter"
             ]
-            new_factories = [
+            new_part_ids = [
                 "cosmoteer.factory_ammo",
                 "cosmoteer.factory_nuke",
-                "cosmoteer.factory_he"
+                "cosmoteer.factory_he",
+                "cosmoteer.disruptor"
             ]
 
-            # Check if the part ID is in the old_factories list
-            if part["ID"] in old_factories:
-                # Replace the part ID with its corresponding new factory ID
-                part["ID"] = new_factories[old_factories.index(part["ID"])]
+            if part["ID"] in old_part_ids:
+                # Replace the part ID with its corresponding new ID
+                part["ID"] = new_part_ids[old_part_ids.index(part["ID"])]
+                print(part)
                 new_parts.append(part)
                 classic = True
                 continue
@@ -871,7 +894,7 @@ def remove_weird_parts(parts):
 
     return new_parts, error_msg
 
-def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,"draw_all_coms":False}):
+def com(input_filename, output_filename,args):
     """
     Calculate the center of mass, center of thrust, and speed of a ship.
 
@@ -942,6 +965,6 @@ def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,
     return data_com, data_cot, speed, error_message
 
 if(__name__ == "__main__"):
-    com(SHIP, "out.png", {"boost":BOOST,"draw_all_cot":DRAW_ALL_COT,"draw_all_com":DRAW_ALL_COM,"draw_cot":DRAW_COT,"draw_com":DRAW_COM})
+    com(SHIP, "out.png", {"boost":BOOST,"draw_all_cot":DRAW_ALL_COT,"draw_all_com":DRAW_ALL_COM,"draw_cot":DRAW_COT,"draw_com":DRAW_COM,"flip_vectors":FLIP_VECTORS})
 
 

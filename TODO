@@ -1,6 +1,0 @@
-- command arguments on the Bot
-    - fast mode
-- optimize
-    - save_tools could be faster
-    - make a fast mode that represents the ship as fast as possible, maybe using pixels
-- fix classic electronbolts

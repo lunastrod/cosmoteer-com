@@ -39,7 +39,7 @@ async def on_ready():
     print("Bot is ready")
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, strafecot: bool = True, partcom: bool = False):
+async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flipvectors: bool = True, strafecot: bool = True, partcom: bool = False):
     print("defer")
     await interaction.response.defer()
     print("deferred, saving")
@@ -49,7 +49,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
         s.write(f.read())
     print("saved, calculating")
     try:
-        args={"boost":boost,"draw_all_cot":strafecot,"draw_all_com":partcom,"draw_cot":True,"draw_com":True}
+        args={"boost":boost,"draw_all_cot":strafecot,"draw_all_com":partcom,"draw_cot":True,"draw_com":True,"flip_vectors":flipvectors}
         data_com, data_cot, speed, error_msg=center_of_mass.com("discord_bot/ship.ship.png", "discord_bot/out.png",args)#calculate the center of mass
     except:
         await interaction.followup.send("Error: could not process ship",file=discord.File("discord_bot/ship.ship.png"))

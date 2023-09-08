@@ -2,6 +2,10 @@
 secret_token.py
 discord_bot/
 
+# output from the tool
+out.png
+out.json
+
 # Filetypes
 *ship.png
 
