@@ -959,7 +959,7 @@ def com(input_filename, output_filename,args):
     for direction, speed in speeds.items():
         print(f"speed {direction}: ", speed)
     # to do : push speed directions to discord, need update to bot.py
-    return data_com, data_cot, speeds[direction_mapping[ship_orientation]], error_message
+    return data_com, data_cot, speeds[direction_mapping[decoded_data["FlightDirection"]]], error_message
 
 if(__name__ == "__main__"):
     com(SHIP, "out.png", {"boost":BOOST,"draw_all_cot":DRAW_ALL_COT,"draw_all_com":DRAW_ALL_COM,"draw_cot":DRAW_COT,"draw_com":DRAW_COM,"flip_vectors":FLIP_VECTORS})
