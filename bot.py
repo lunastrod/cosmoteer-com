@@ -31,8 +31,6 @@ help_text="""/version: """+version_text+"""
 
 - If you notice any mistakes on things like the total mass or the speed, ping LunastroD"""
 
-print(help_text)
-
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game(name="Cosmoteer (/help)"))
