@@ -19,7 +19,7 @@ help_text="""
 - parameters:
     - ship: the .ship.png file of the ship. Usually found in C:\Users\UR USERNAME\Saved Games\Cosmoteer\UR STEAM ID\Saved Ships
     - boost: turns boosters on or off. Default: on
-    - flipvectors: flips the thrust vectors to avoid overlap. Default: on
+    - flipvectors: flips the thrust vectors to avoid overlap. Default: off
     - strafecot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
     - partcom: draws the center of mass of each part. Default: off
 
@@ -44,7 +44,7 @@ async def on_ready():
     print("Bot is ready")
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flipvectors: bool = True, strafecot: bool = True, partcom: bool = False):
+async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flipvectors: bool = False, strafecot: bool = True, partcom: bool = False):
     print("defer")
     await interaction.response.defer()
     print("deferred, saving")
