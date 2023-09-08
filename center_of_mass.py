@@ -924,9 +924,6 @@ def com(input_filename, output_filename,args):
     origin_thrust, thrust_vector, thrust_direction = diagonal_center_of_thrust(origin_thrust, thrust_vector, thrust_direction)
     data_cot = [origin_thrust, thrust_vector, thrust_direction]
 
-    # Calculate speed
-    speed = top_speed(mass, thrust_direction[ship_orientation])
-
     # Draw ship and write to output image
     error_message += draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args)
 
@@ -962,7 +959,7 @@ def com(input_filename, output_filename,args):
     for direction, speed in speeds.items():
         print(f"speed {direction}: ", speed)
     # to do : push speed directions to discord, need update to bot.py
-    return data_com, data_cot, speed, error_message
+    return data_com, data_cot, speeds[direction_mapping[ship_orientation]], error_message
 
 if(__name__ == "__main__"):
     com(SHIP, "out.png", {"boost":BOOST,"draw_all_cot":DRAW_ALL_COT,"draw_all_com":DRAW_ALL_COM,"draw_cot":DRAW_COT,"draw_com":DRAW_COM,"flip_vectors":FLIP_VECTORS})
