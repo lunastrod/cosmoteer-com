@@ -140,4 +140,4 @@ async def help(interaction: discord.Interaction):
     # Send the help text along with the legend image as a file
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
 
-# client.run(os.getenv("DISCORDBOTAPI"))
+client.run(os.getenv("DISCORDBOTAPI"))
