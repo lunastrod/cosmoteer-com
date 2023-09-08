@@ -16,18 +16,18 @@ help_text="""/version: """+version_text+"""
 
 /com: Calculates the center of mass of a cosmoteer ship.png
 - parameters:
-    - ship: the .ship.png file of the ship. Usually found in C:\\Users\\UR USERNAME\\Saved Games\\Cosmoteer\\UR STEAM ID\\Saved Ships
-    - boost: turns boosters on or off. Default: on
-    - flipvectors: flips the thrust vectors to avoid overlap. Default: off
-    - strafecot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
-    - partcom: draws the center of mass of each part. Default: off
+ - ship: the .ship.png file of the ship. Usually found in C:\\Users\\UR USERNAME\\Saved Games\\Cosmoteer\\UR STEAM ID\\Saved Ships
+ - boost: turns boosters on or off. Default: on
+ - flipvectors: flips the thrust vectors to avoid overlap. Default: off
+ - strafecot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
+ - partcom: draws the center of mass of each part. Default: off
 
 - common questions:
-    - does the bot consider the 5% lateral thrust of each thruster? yes
-    - does the bot consider engine room buff? yes
-    - is the cot exact? it should be
-    - is the com exact? no, it's a decent approximation, it should be inside the green circle
-    - is the max speed exact? no, it's an approximation, assume ±1%, and it assumes your ship is balanced
+ - does the bot consider the 5% lateral thrust of each thruster? yes
+ - does the bot consider engine room buff? yes
+ - is the cot exact? it should be
+ - is the com exact? no, it's a decent approximation, it should be inside the green circle
+ - is the max speed exact? no, it's an approximation, assume ±1%, and it assumes your ship is balanced
 
 - If you notice any mistakes on things like the total mass or the speed, ping LunastroD"""
 
