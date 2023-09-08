@@ -1,8 +1,14 @@
 import discord
 from discord import app_commands
-import secret_token
+# import secret_token
+from dotenv import load_dotenv
+import os
 import center_of_mass
 import asyncio
+import base64
+from io import BytesIO
+
+load_dotenv()
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -30,58 +36,109 @@ common questions:
 
 @client.event
 async def on_ready():
+    """
+    Event handler that is called when the bot is ready to start receiving events.
+    """
+    # Set the bot's presence to the specified game
     await client.change_presence(activity=discord.Game(name="Cosmoteer (/help)"))
+    
+    # Print a message indicating that the slash commands are being synced
     print("Syncing slash commands")
+    
+    # Sync the slash commands with the Discord API
     await tree.sync()
+    
+    # Print a list of guilds that the bot is connected to
     print("Guilds:")
     for guild in client.guilds:
         print("\t- " + guild.name, guild.id)
+    
+    # Print a message indicating that the bot is ready
     print("Bot is ready")
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
 async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, strafecot: bool = True, partcom: bool = False):
-    print("defer")
+    # Defer the initial response to let the user know the command is being processed
     await interaction.response.defer()
-    print("deferred, saving")
-    await ship.save('discord_bot/ship.ship.png')
-    #copy legend.png to out.png
-    with open('legend.png', 'rb') as f, open("discord_bot/out.png", "wb") as s:
-        s.write(f.read())
-    print("saved, calculating")
-    try:
-        args={"boost":boost,"draw_all_cot":strafecot,"draw_all_com":partcom,"draw_cot":True,"draw_com":True}
-        data_com, data_cot, speed, error_msg=center_of_mass.com("discord_bot/ship.ship.png", "discord_bot/out.png",args)#calculate the center of mass
-    except:
-        await interaction.followup.send("Error: could not process ship",file=discord.File("discord_bot/ship.ship.png"))
-        return
-    print("calculated, sending")
-    with open('discord_bot/out.png', 'rb') as f, open("discord_bot/ship.ship.png", "rb") as s:#send the output image
-        picture = discord.File(f)
-        ship = discord.File(s)
-        files_to_send: list[discord.File] = [ship,picture]
-        text=""
-        text+=error_msg
-        text+="use the /help command for more info\n"
-        text+="Center of mass: " + str(round(data_com[0],2)) + ", " + str(round(data_com[1],2)) + "\n"
-        text+="Total mass: " + str(round(data_com[2],2)) + "t\n"
-        text+="Predicted max speed: " + str(round(speed,2)) + "m/s\n"
 
-        
-        await asyncio.sleep(3)
-        await interaction.followup.send(text,files=files_to_send)
-        print(text)
-        print("sent")
+    # Read the image bytes from the attachment
+    image_bytes = await ship.read()
+
+    # Encode the image bytes in base64 format
+    base64_string = base64.b64encode(image_bytes).decode('utf-8')
+
+    try:
+        # Prepare the arguments for the center_of_mass calculation
+        args = {"boost": boost, "draw_all_cot": strafecot, "draw_all_com": partcom, "draw_cot": True, "draw_com": True}
+
+        # Call the center_of_mass function with the base64 string and the arguments
+        data_com, data_cot, speed, error_msg, base64_output = center_of_mass.com(base64_string, "", args)
+    except Exception as e:
+        # Print the error message and return if an exception occurs
+        print(e)
+        print("Error: could not process ship")
+        return "Error: could not process ship"
+
+    # Decode the base64 output into bytes
+    decoded_bytes = base64.b64decode(base64_output)
+
+    # Create a BytesIO stream for the output file
+    file_stream = BytesIO(decoded_bytes)
+
+    # Create a BytesIO stream for the input file
+    file_stream_in = BytesIO(image_bytes)
+
+    # Create discord.File objects for the output and input files
+    picture = discord.File(file_stream, filename="output_file.png")
+    ship = discord.File(file_stream_in, filename="input_file.png")
+    
+    # Prepare the list of files to send in the response
+    files_to_send = [ship, picture]
+    
+    # Prepare the text response
+    text = ""
+    text += error_msg
+    text += "use the /help command for more info\n"
+    text += "Center of mass: " + str(round(data_com[0], 2)) + ", " + str(round(data_com[1], 2)) + "\n"
+    text += "Total mass: " + str(round(data_com[2], 2)) + "t\n"
+    text += "Predicted max speed: " + str(round(speed, 2)) + "m/s\n"
+
+    # Send the response with the text and files
+    await interaction.followup.send(text, files=files_to_send)
         
 
 
 @tree.command(name="version", description=short_version_text)
 async def version(interaction: discord.Interaction):
+    """
+    Command to display the version of the tree.
+
+    Parameters:
+        interaction (discord.Interaction): The interaction object representing the user's command.
+
+    Returns:
+        None
+    """
     await interaction.response.send_message(version_text)
 
 @tree.command(name="help", description="shows the list of commands")
 async def help(interaction: discord.Interaction):
-    await interaction.response.defer()
-    center_of_mass.draw_legend("legend.png")
-    await interaction.followup.send(help_text,file=discord.File("legend.png"))
+    """
+    Responds to a help command and sends a list of commands.
 
-client.run(secret_token.token)
+    Parameters:
+        interaction (discord.Interaction): The interaction triggered by the user.
+
+    Returns:
+        None
+    """
+    # Defer the initial response to prevent timeouts
+    await interaction.response.defer()
+    
+    # Generate the legend image for the command
+    center_of_mass.draw_legend("legend.png")
+    
+    # Send the help text along with the legend image as a file
+    await interaction.followup.send(help_text, file=discord.File("legend.png"))
+
+client.run(os.getenv("DISCORDBOTAPI"))

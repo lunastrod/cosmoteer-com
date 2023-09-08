@@ -23,6 +23,7 @@ import part_data
 import cosmoteer_save_tools
 from pathlib import Path
 from vector2d import Vector2D
+import base64
 
 BOOST=True
 DRAW_ALL_COM=False
@@ -775,8 +776,17 @@ def draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args
     # Crop the image
     img = crop(img)
     # Save the image
-    cv2.imwrite(output_filename, img)
-    return ""
+    if output_filename != "":
+        cv2.imwrite(output_filename, img)
+        return output_filename
+    else:
+        # Convert the OpenCV image to a NumPy array
+        img_np = np.asarray(img)
+
+        # Encode the NumPy array as a base64 string
+        _, buffer = cv2.imencode('.png', img_np)
+        base64_encoded = base64.b64encode(buffer).decode("utf-8")
+        return base64_encoded
 
 def remove_weird_parts(parts):
     """
@@ -905,7 +915,7 @@ def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,
     speed = top_speed(mass, thrust_direction[ship_orientation])
 
     # Draw ship and write to output image
-    error_message += draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args)
+    base64_output = draw_ship(parts, data_com, data_cot, ship_orientation, output_filename, args)
 
     # Print results
     print("center of mass: ", data_com)
@@ -939,9 +949,15 @@ def com(input_filename, output_filename, args={"boost":True,"draw_all_cot":True,
     for direction, speed in speeds.items():
         print(f"speed {direction}: ", speed)
     # to do : push speed directions to discord, need update to bot.py
-    return data_com, data_cot, speed, error_message
+    return data_com, data_cot, speed, error_message, base64_output
 
 if(__name__ == "__main__"):
     com(SHIP, "out.png", {"boost":BOOST,"draw_all_cot":DRAW_ALL_COT,"draw_all_com":DRAW_ALL_COM,"draw_cot":DRAW_COT,"draw_com":DRAW_COM})
 
 
+# with open(SHIP, "rb") as img_file:
+#         ship_data = base64.b64encode(img_file.read()).decode('utf-8')
+# ship_data = 'https://media.discordapp.net/attachments/1117705148920234045/1149355944849965106/input_file.png'
+# ship_data = 'ships/Sion.ship.png'
+# out_data = com(ship_data, "",  {"boost":BOOST,"draw_all_cot":DRAW_ALL_COT,"draw_all_com":DRAW_ALL_COM,"draw_cot":DRAW_COT,"draw_com":DRAW_COM})
+# print(out_data)
