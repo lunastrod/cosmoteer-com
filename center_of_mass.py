@@ -934,7 +934,7 @@ def com(input_filename, output_filename,args):
         print("thrust vector in direction", i, ": ", data_cot[1][i])
         print("thrust in direction", i, ": ", data_cot[2][i])
         print()
-    print("speed: ", speed)
+    
     print(error_message)
     
     # direction mapping
