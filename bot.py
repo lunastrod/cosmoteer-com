@@ -149,6 +149,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
         print(dt.now(),"sent to discord")
 
     except requests.exceptions.RequestException as e:
+        files_to_send = [ship]
         print(dt.now(),"error",e)
         text = "Error: could not process ship :"+str(e)
         await interaction.followup.send(text, files=files_to_send)
