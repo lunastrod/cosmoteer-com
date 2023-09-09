@@ -156,7 +156,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
     
 @tree.command(name="ping", description="responds with the bot's latency")
 async def ping(interaction: discord.Interaction):
-    await interaction.response('Pong! {0}'.format(round(client.latency, 1)))
+    await interaction.response.send_message('Pong! {0}ms'.format(round(client.latency*1000)))
 
 @tree.command(name="help", description="shows the list of commands")
 async def help(interaction: discord.Interaction):
