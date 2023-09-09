@@ -90,6 +90,9 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
     image_bytes = await ship.read()
     base64_string = base64.b64encode(image_bytes).decode('utf-8')
 
+    # Create a file object for the original image
+    ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
+
     try:
         # Prepare the request data
         args = {
@@ -110,8 +113,6 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
         response.raise_for_status()
         print(dt.now(),"server responded")
         
-        # Create a file object for the original image
-        ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
 
         # Get the response
         data_returned = response.json()
@@ -149,10 +150,9 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
         print(dt.now(),"sent to discord")
 
     except requests.exceptions.RequestException as e:
-        files_to_send = [ship]
         print(dt.now(),"error",e)
-        text = "Error: could not process ship :"+str(e)
-        await interaction.followup.send(text, files=files_to_send)
+        text = "Error: could not process ship :\n\t"+str(e)
+        await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
     
 @tree.command(name="ping", description="responds with the bot's latency")
