@@ -140,9 +140,13 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
 
         # Prepare the text response
         text = "use the /help command for more info\n"
+        if(data_returned['author']!=""):
+            text += f"Made by: {data_returned['author']}\n"
         text += f"Center of mass: {round(data_returned['center_of_mass_x'], 2)}, {round(data_returned['center_of_mass_y'], 2)}\n"
         text += f"Total mass: {round(data_returned['total_mass'], 2)}t\n"
         text += f"Predicted max speed: {round(data_returned['top_speed'], 2)}m/s\n"
+        text += f"Total crew: {data_returned['crew']}\n"
+        text += f"Aprox cost: {data_returned['price']:,}\n"
 
         # Send the text response and files
         print(dt.now(),"sending to discord")
