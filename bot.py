@@ -203,7 +203,6 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         data_returned = response.json()
         # if draw is false do not retrieve the center of mass image
         # Get the URL of the center of mass image
-        print(data_returned)
         url_stats = data_returned["analysis"]["url_analysis"]
         # Fetch the center of mass image
         print(dt.now(),"requesting image")
