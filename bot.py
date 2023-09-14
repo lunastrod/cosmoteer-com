@@ -187,7 +187,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
             "draw_com": False,
             "draw": False,
             "flip_vectors": False,
-            "analysis" : True
+            "analyze" : True
         }
         json_data = json.dumps({'image': base64_string, 'args': args})
 
@@ -227,19 +227,19 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         price_crew = data_returned["analysis"]["price_crew"]["price"]
         price_armor = data_returned["analysis"]["price_armor"]["price"]
         price_weapons = data_returned["analysis"]["price_weapons"]["price"]
-        price_mouvement = data_returned["analysis"]["price_mouvement"]["price"]
+        price_movement = data_returned["analysis"]["price_mouvement"]["price"]
         price_shield = data_returned["analysis"]["price_shield"]["price"]
         price_storage = data_returned["analysis"]["price_storage"]["price"]
         price_utility = data_returned["analysis"]["price_utility"]["price"]
         price_power = data_returned["analysis"]["price_power"]["price"]
-        percent_crew = data_returned["analysis"]["price_crew"]["percent"]
-        percent_armor = data_returned["analysis"]["price_armor"]["percent"]
-        percent_weapons = data_returned["analysis"]["price_weapons"]["percent"]
-        percent_mouvement = data_returned["analysis"]["price_mouvement"]["percent"]
-        percent_shield = data_returned["analysis"]["price_shield"]["percent"]
-        percent_storage = data_returned["analysis"]["price_storage"]["percent"]
-        percent_utility = data_returned["analysis"]["price_utility"]["percent"]
-        percent_power = data_returned["analysis"]["price_power"]["percent"]
+        percent_crew = round(data_returned["analysis"]["price_crew"]["percent"]*100,1)
+        percent_armor = round(data_returned["analysis"]["price_armor"]["percent"]*100,1)
+        percent_weapons = round(data_returned["analysis"]["price_weapons"]["percent"]*100,1)
+        percent_movement = round(data_returned["analysis"]["price_mouvement"]["percent"]*100,1)
+        percent_shield = round(data_returned["analysis"]["price_shield"]["percent"]*100,1)
+        percent_storage = round(data_returned["analysis"]["price_storage"]["percent"]*100,1)
+        percent_utility = round(data_returned["analysis"]["price_utility"]["percent"]*100,1)
+        percent_power = round(data_returned["analysis"]["price_power"]["percent"]*100,1)
         
         # Prepare the text response
         text = "use the /help command for more info\n"
@@ -247,7 +247,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         text += f"Crew price: {price_crew} | {percent_crew}%\n"
         text += f"Armor price: {price_armor} | {percent_armor}%\n"
         text += f"Weapons price: {price_weapons} | {percent_weapons}%\n"
-        text += f"Movement price: {price_mouvement} | {percent_mouvement}%\n"
+        text += f"Movement price: {price_movement} | {percent_movement}%\n"
         text += f"Shield price: {price_shield} | {percent_shield}%\n"
         text += f"Storage price: {price_storage} | {percent_storage}%\n"
         text += f"Utility price: {price_utility} | {percent_utility}%\n"
