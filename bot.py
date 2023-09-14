@@ -158,7 +158,109 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
         text = "Error: could not process ship :\n\t"+str(e)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
+
+@tree.command(name="cost", description="Calculates cost analysis of a cosmoteer ship.png")
+async def com(interaction: discord.Interaction, ship: discord.Attachment):
+
     
+    print(dt.now(),"received command")
+    await interaction.response.defer()
+    print(dt.now(),"deferred")
+
+    # Read the image bytes and encode them to base64
+    image_bytes = await ship.read()
+    base64_string = base64.b64encode(image_bytes).decode('utf-8')
+
+    # Create a file object for the original image
+    ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
+
+    try:
+        # Prepare the request data
+        args = {
+            "boost": False,
+            "draw_all_cot": False,
+            "draw_all_com": False,
+            "draw_cot": False,
+            "draw_com": False,
+            "draw": False,
+            "flip_vectors": False,
+            "analysis" : True
+        }
+        json_data = json.dumps({'image': base64_string, 'args': args})
+
+        # Send the request to the server
+        url = API_URL
+        print(dt.now(),"requesting data")
+        response = requests.post(url, json=json_data)
+        response.raise_for_status()
+        print(dt.now(),"server responded")
+        
+
+        # Get the response
+        data_returned = response.json()
+        # if draw is false do not retrieve the center of mass image
+        # Get the URL of the center of mass image
+        
+        url_stats = data_returned["analysis"]["url_analysis"]
+        # Fetch the center of mass image
+        print(dt.now(),"requesting image")
+        response_url_stats = requests.get(url_stats)
+        response_url_stats.raise_for_status()
+        content_response = response_url_stats.content
+        print(dt.now(),"server responded")
+
+        # Create a file object for the center of mass image
+        picture = discord.File(BytesIO(content_response), filename="output_file.png")
+        
+        # Prepare the list of files to send
+        files_to_send = [ship, picture]
+
+        """
+        {"url_com": false, "center_of_mass_x": -0.481210071401729, "center_of_mass_y": 5.3820744081172505, "total_mass": 266.09999999999997, "top_speed": 0.0, "crew": 62, "price": 287760, "tags": ["chaingun", "small_reactor"], "author": "kine", "all_direction_speeds": {"NW": 0.0, "N": 0.0, "NE": 0.0, "E": 0.0, "SE": 0.0, "S": 0.0, "SW": 0.0, "W": 0.0}, "analysis": {"url_analysis": "https://i.ibb.co/P1YCgm7/c63c50987278.png", "total_price": {"price": 287760, "percent": 1}, "price_crew": {"price": 43600, "percent": 0.15151515151515152}, "price_weapons": {"price": 175800, "percent": 0.6109257714762302}, "price_armor": {"price": 0, "percent": 0.0}, "price_mouvement": {"price": 0, "percent": 0.0}, "price_power": {"price": 25000, "percent": 0.08687795385043091}, "price_shield": {"price": 0, "percent": 0.0}, "price_storage": {"price": 27360, "percent": 0.0950792326939116}}}
+        """
+
+        # prepare data
+        total_price = data_returned["analysis"]["total_price"]["price"]
+        price_crew = data_returned["analysis"]["price_crew"]["price"]
+        price_armor = data_returned["analysis"]["price_armor"]["price"]
+        price_weapons = data_returned["analysis"]["price_weapons"]["price"]
+        price_mouvement = data_returned["analysis"]["price_mouvement"]["price"]
+        price_shield = data_returned["analysis"]["price_shield"]["price"]
+        price_storage = data_returned["analysis"]["price_storage"]["price"]
+        price_utility = data_returned["analysis"]["price_utility"]["price"]
+        price_power = data_returned["analysis"]["price_power"]["price"]
+        percent_crew = data_returned["analysis"]["price_crew"]["percent"]
+        percent_armor = data_returned["analysis"]["price_armor"]["percent"]
+        percent_weapons = data_returned["analysis"]["price_weapons"]["percent"]
+        percent_mouvement = data_returned["analysis"]["price_mouvement"]["percent"]
+        percent_shield = data_returned["analysis"]["price_shield"]["percent"]
+        percent_storage = data_returned["analysis"]["price_storage"]["percent"]
+        percent_utility = data_returned["analysis"]["price_utility"]["percent"]
+        percent_power = data_returned["analysis"]["price_power"]["percent"]
+        
+        # Prepare the text response
+        text = "use the /help command for more info\n"
+        text += f"Total price: {total_price}\n"
+        text += f"Crew price: {price_crew} | {percent_crew}%\n"
+        text += f"Armor price: {price_armor} | {percent_armor}%\n"
+        text += f"Weapons price: {price_weapons} | {percent_weapons}%\n"
+        text += f"Movement price: {price_mouvement} | {percent_mouvement}%\n"
+        text += f"Shield price: {price_shield} | {percent_shield}%\n"
+        text += f"Storage price: {price_storage} | {percent_storage}%\n"
+        text += f"Utility price: {price_utility} | {percent_utility}%\n"
+        text += f"Power price: {price_power} | {percent_power}%\n"
+
+        # Send the text response and files
+        print(dt.now(),"sending to discord")
+        await interaction.followup.send(text, files=files_to_send)
+        print(dt.now(),"sent to discord")
+
+    except requests.exceptions.RequestException as e:
+        print(dt.now(),"error",e)
+        text = "Error: could not process ship :\n\t"+str(e)
+        await interaction.followup.send(text, file=ship)
+        return "Error: could not process ship"
+
 @tree.command(name="ping", description="responds with the bot's latency")
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message('Pong! {0}ms'.format(round(client.latency*1000)))
