@@ -28,12 +28,15 @@ help_text=version_text+"""
 
 /com: Calculates the center of mass of a cosmoteer ship.png
 - parameters:
- - ship: the .ship.png file of the ship. Usually found in C:\\Users\\UR USERNAME\\Saved Games\\Cosmoteer\\UR STEAM ID\\Saved Ships
+ - ship: the .ship.png file of the ship. Usually found in C:\\Users\\YOUR USERNAME\\Saved Games\\Cosmoteer\\YOUR STEAM ID\\Saved Ships
  - boost: turns boosters on or off. Default: on
  - flipvectors: flips the thrust vectors to avoid overlap. Default: off
  - strafecot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
  - partcom: draws the center of mass of each part. Default: off
  - draw: draws the output image. Default: on
+/cost: Calculates cost analysis of a cosmoteer ship.png
+- parameters:
+ - ship: the .ship.png file of the ship. Usually found in C:\\Users\\YOUR USERNAME\\Saved Games\\Cosmoteer\\YOUR STEAM ID\\Saved Ships
 
 - common questions:
  - does the bot consider the 5% lateral thrust of each thruster? yes
@@ -153,7 +156,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
         await interaction.followup.send(text, files=files_to_send)
         print(dt.now(),"sent to discord")
 
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(dt.now(),"error",e)
         text = "Error: could not process ship :\n\t"+str(e)
         await interaction.followup.send(text, file=ship)
@@ -200,7 +203,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         data_returned = response.json()
         # if draw is false do not retrieve the center of mass image
         # Get the URL of the center of mass image
-        
+        print(data_returned)
         url_stats = data_returned["analysis"]["url_analysis"]
         # Fetch the center of mass image
         print(dt.now(),"requesting image")
@@ -255,7 +258,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         await interaction.followup.send(text, files=files_to_send)
         print(dt.now(),"sent to discord")
 
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(dt.now(),"error",e)
         text = "Error: could not process ship :\n\t"+str(e)
         await interaction.followup.send(text, file=ship)
