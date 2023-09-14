@@ -220,42 +220,42 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         """
         {"url_com": false, "center_of_mass_x": -0.481210071401729, "center_of_mass_y": 5.3820744081172505, "total_mass": 266.09999999999997, "top_speed": 0.0, "crew": 62, "price": 287760, "tags": ["chaingun", "small_reactor"], "author": "kine", "all_direction_speeds": {"NW": 0.0, "N": 0.0, "NE": 0.0, "E": 0.0, "SE": 0.0, "S": 0.0, "SW": 0.0, "W": 0.0}, "analysis": {"url_analysis": "https://i.ibb.co/P1YCgm7/c63c50987278.png", "total_price": {"price": 287760, "percent": 1}, "price_crew": {"price": 43600, "percent": 0.15151515151515152}, "price_weapons": {"price": 175800, "percent": 0.6109257714762302}, "price_armor": {"price": 0, "percent": 0.0}, "price_mouvement": {"price": 0, "percent": 0.0}, "price_power": {"price": 25000, "percent": 0.08687795385043091}, "price_shield": {"price": 0, "percent": 0.0}, "price_storage": {"price": 27360, "percent": 0.0950792326939116}}}
         """
+        analysis = data_returned["analysis"]
 
-        # prepare data
-        total_price = data_returned["analysis"]["total_price"]["price"]
-        price_crew = data_returned["analysis"]["price_crew"]["price"]
-        price_armor = data_returned["analysis"]["price_armor"]["price"]
-        price_weapons = data_returned["analysis"]["price_weapons"]["price"]
-        price_movement = data_returned["analysis"]["price_mouvement"]["price"]
-        price_shield = data_returned["analysis"]["price_shield"]["price"]
-        price_storage = data_returned["analysis"]["price_storage"]["price"]
-        price_utility = data_returned["analysis"]["price_utility"]["price"]
-        price_power = data_returned["analysis"]["price_power"]["price"]
-        percent_crew = round(data_returned["analysis"]["price_crew"]["percent"]*100,1)
-        percent_armor = round(data_returned["analysis"]["price_armor"]["percent"]*100,1)
-        percent_weapons = round(data_returned["analysis"]["price_weapons"]["percent"]*100,1)
-        percent_movement = round(data_returned["analysis"]["price_mouvement"]["percent"]*100,1)
-        percent_shield = round(data_returned["analysis"]["price_shield"]["percent"]*100,1)
-        percent_storage = round(data_returned["analysis"]["price_storage"]["percent"]*100,1)
-        percent_utility = round(data_returned["analysis"]["price_utility"]["percent"]*100,1)
-        percent_power = round(data_returned["analysis"]["price_power"]["percent"]*100,1)
-        
-        # Prepare the text response
-        text = "use the /help command for more info\n"
-        text += f"Total price: {total_price}\n"
-        text += f"Crew price: {price_crew} | {percent_crew}%\n"
-        text += f"Armor price: {price_armor} | {percent_armor}%\n"
-        text += f"Weapons price: {price_weapons} | {percent_weapons}%\n"
-        text += f"Movement price: {price_movement} | {percent_movement}%\n"
-        text += f"Shield price: {price_shield} | {percent_shield}%\n"
-        text += f"Storage price: {price_storage} | {percent_storage}%\n"
-        text += f"Utility price: {price_utility} | {percent_utility}%\n"
-        text += f"Power price: {price_power} | {percent_power}%\n"
+        categories = ["total_price", "price_crew", "price_armor", "price_weapons", "price_mouvement", 
+                        "price_shield", "price_storage", "price_utility", "price_power"]
 
-        # Send the text response and files
-        print(dt.now(),"sending to discord")
-        await interaction.followup.send(text, files=files_to_send)
-        print(dt.now(),"sent to discord")
+        embed = discord.Embed(
+            title="Price analysis",
+            color=discord.Color.green()
+        )
+
+        # Create a formatted table header with consistent column widths
+        table_header = "Category         | Percent        | Price\n"
+        table_header += "-----------------|----------------|--------------\n"
+
+        # Create a formatted table body with each category's data
+        table_body = ""
+        for category in categories:
+            percent = f"{analysis[category]['percent']*100:.2f}%"
+            price = analysis[category]["price"]
+            
+            # Format each column with padding to ensure consistent width
+            category_formatted = f"{category:<16}"
+            percent_formatted = f"{percent:<14}"
+            price_formatted = f"{price:<16}"
+            
+            table_body += f"{category_formatted} | {percent_formatted} | {price_formatted}\n"
+
+        # Combine the header and body to form the table
+        table = f"```\n{table_header}{table_body}```"
+
+        # Add the table to the Discord embed
+        embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
+
+        print(dt.now(), "sending to Discord")
+        await interaction.followup.send(embed=embed, files=files_to_send)
+        print(dt.now(), "sent to Discord")
 
     except Exception as e:
         print(dt.now(),"error",e)
