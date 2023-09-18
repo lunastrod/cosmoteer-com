@@ -374,30 +374,21 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         )
 
         # Create a formatted table header with consistent column widths
-        table_header =  "Category | Price (Percent)\n"
-        table_header += "---------|----------------\n"
+        table_header =  "Category  | Percent | Price\n"
+        table_header += "----------|---------|----------\n"
 
         # Create a formatted table body with each category's data
         table_body = ""
         for category in categories:
             percent = f"{analysis[category]['percent']*100:.2f}%"
             price = analysis[category]["price"]
-
-            categories_rename = ["Total", "Crew", "Armor", "Weapons", "Thrust", 
-                        "Shield", "Storage", "Misc", "Power"]
-            # replace category name with categories_rename
-            category_idx = categories.index(category)
-            category_renamed = categories_rename[category_idx]
-
+            
             # Format each column with padding to ensure consistent width
-            category_formatted = f"{category_renamed:<8}"
-
-            # Format each column with padding to ensure consistent width
-            # category_formatted = f"{category:<8}"
-            percent_formatted = f"{percent:<8}"
-            price_formatted = f"{price:<9} ({percent_formatted})"
-
-            table_body += f"{category_formatted} | {price_formatted}\n"
+            category_formatted = f"{text_categories[category]:<9}"
+            percent_formatted = f"{percent:>7}"
+            price_formatted = f"{price:>8}"
+            
+            table_body += f"{category_formatted} | {percent_formatted} | {price_formatted}\n"
 
         # Combine the header and body to form the table
         table = f"```\n{table_header}{table_body}```"
@@ -406,7 +397,7 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
 
         print(dt.now(), "sending to Discord")
-        await interaction.followup.send(embed=embed, files=files_to_send2)
+        await interaction.followup.send(embed=embed, files=files_to_send)
         print(dt.now(), "sent to Discord")
 
     except Exception as e:
