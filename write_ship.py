@@ -56,43 +56,31 @@ new_ship.write()
 """
 
 from PIL import Image
+import numpy as np
 import gzip
 
-def read_lsb(image_path):
-    try:
-        # Open the image
-        img = Image.open(image_path)
+def read_bytes(image_data) -> bytes:
+    data = [byte for pixel in image_data for byte in pixel[:3]]
+    length = int.from_bytes(bytes([get_byte(i, data) for i in range(4)]), "big")
+    return bytes([get_byte(i + 4, data) for i in range(length)])
 
-        # Initialize a list to store the LSBs of each channel
-        lsb_bytes = bytearray()
-
-        # Iterate over each pixel
-        for y in range(img.height):
-            for x in range(img.width):
-                pixel_values = img.getpixel((x, y))
-                for i in range(3):  # Iterate over Red, Green, Blue channels
-                    pixel_value = pixel_values[i]
-                    # Extract the LSB of the pixel value and append it to the bytearray
-                    lsb_bytes.append(pixel_value & 1)
-
-        # Convert the bytearray to bytes
-        lsb_bytes = bytes(lsb_bytes)
-
-        return lsb_bytes
-
-    except Exception as e:
-        print("An error occurred:", str(e))
-        return None
+def get_byte(offset, data) -> int:
+    out_byte = 0
+    for bits_right in range(8):
+        out_byte |= (data[offset * 8 + bits_right] & 1) << bits_right
+    return out_byte
 
 if __name__ == "__main__":
-    image_path = "ships/Sion.ship.png"  # Replace with the path to your image
-    lsb_bytes = read_lsb(image_path)
-
-    if lsb_bytes is None:
-        print("LSB extraction failed.")
-        exit()
-    print("decompressing...")
-    print(lsb_bytes)
-    lsb_bytes=gzip.decompress(lsb_bytes)
-    print("LSBs of the image as a bytearray:")
-    print(lsb_bytes)
+    image_path = "ships/engine.ship.png"  # Replace with the path to your image
+    try:
+        # Open the image in the main function
+        img_data=np.array(Image.open(image_path).getdata())
+        data=read_bytes(img_data)
+        if data[:9] == b'COSMOSHIP':
+            data = data[9:]
+            version = 2
+        print(data)
+        uncompressed_data = gzip.decompress(data)
+        print(uncompressed_data)
+    except Exception as e:
+        print("An error occurred while opening the image:", str(e))
