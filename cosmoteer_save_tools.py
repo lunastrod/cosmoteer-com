@@ -261,6 +261,7 @@ class Ship():
         
         elif isinstance(data_node, (str, int, float, bool, tuple, bytes)) or self.is_2int_list(data_node):
             byte_data.append(OBNodeType.Data.value)
+            print(data_node)
             
             if isinstance(data_node, str):
                 string_data = self.write_string(data_node)
