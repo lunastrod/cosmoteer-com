@@ -158,7 +158,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
 
     except Exception as e:
         print(dt.now(),"error",e)
-        text = "Error: could not process ship :\n\t"+type(e).__name__, ":", e
+        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
 
@@ -262,7 +262,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
 
     except Exception as e:
         print(dt.now(),"error",e)
-        text = "Error: could not process ship :\n\t"+type(e).__name__, ":", e
+        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
 
@@ -411,7 +411,7 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
 
     except Exception as e:
         print(dt.now(),"error",e)
-        text = "Error: could not process ship :\n\t"+type(e).__name__, ":", e
+        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
 
