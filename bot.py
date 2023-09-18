@@ -69,6 +69,31 @@ async def on_ready():
     # Print a message indicating that the bot is ready
     print(dt.now(),"Bot is ready")
 
+def request_server(args):
+    json_data = json.dumps({'image': "base64_string", 'args': args})
+    # Send the request to the server
+    url = API_URL
+    response = requests.post(url, json=json_data)
+    response.raise_for_status()
+    # Get the response
+    data_returned = response.json()
+    if(args["draw"]==True):
+        # Get the URL of the center of mass image
+        url_com = data_returned['url_com']
+        # Fetch the center of mass image
+        response_url_com = requests.get(url_com)
+        response_url_com.raise_for_status()
+        content_response = response_url_com.content
+        # Create a file object for the center of mass image
+        picture = discord.File(BytesIO(content_response), filename="output_file.png")
+        # Prepare the list of files to send
+        files_to_send = [picture]
+    else:
+        files_to_send = []
+    return data_returned, files_to_send
+    
+
+
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
 async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False, draw: bool = True):
     """
@@ -85,17 +110,7 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
     - draw: Whether to draw the output images.
     """
     
-    print(dt.now(),"received command")
-    await interaction.response.defer()
-    print(dt.now(),"deferred")
-
-    # Read the image bytes and encode them to base64
-    image_bytes = await ship.read()
-    base64_string = base64.b64encode(image_bytes).decode('utf-8')
-
-    # Create a file object for the original image
-    ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
-
+    """
     try:
         # Prepare the request data
         args = {
@@ -155,17 +170,12 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment, boost:
         print(dt.now(),"sending to discord")
         await interaction.followup.send(text, files=files_to_send)
         print(dt.now(),"sent to discord")
-
     except Exception as e:
         print(dt.now(),"error",e)
         text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
-
-@tree.command(name="cost", description="Calculates cost analysis of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment):
-
-    
+    """
     print(dt.now(),"received command")
     await interaction.response.defer()
     print(dt.now(),"deferred")
@@ -176,7 +186,37 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
 
     # Create a file object for the original image
     ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
+    try:
+        print(dt.now(),"requesting data")
+        data_returned,files_to_send= request_server({"boost": boost, "draw_all_cot": draw_all_cot, "draw_all_com": draw_all_com, "draw_cot": True, "draw_com": True, "draw": draw, "flip_vectors": flip_vectors})
+        print(dt.now(),"server responded")
+    except Exception as e:
+        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
+        await interaction.followup.send(text, file=ship)
+        return "Error: could not process ship"
+    # prepare the text response
+    text = "use the /help command for more info\n"
+    if(data_returned['author']!=""):
+        text += f"Made by: {data_returned['author']}\n"
+    text += f"Center of mass: {round(data_returned['center_of_mass_x'], 2)}, {round(data_returned['center_of_mass_y'], 2)}\n"
+    text += f"Total mass: {round(data_returned['total_mass'], 2)}t\n"
+    text += f"Predicted max speed: {round(data_returned['top_speed'], 2)}m/s\n"
+    text += f"Total crew: {data_returned['crew']}\n"
+    text += f"Aprox cost: {data_returned['price']:,}\n"
 
+    # send the text response and files
+    files_to_send.insert(0,ship)
+    print(dt.now(),"sending to discord")
+    await interaction.followup.send(text, files=files_to_send)
+    print(dt.now(),"sent to discord")
+    
+
+
+    
+
+@tree.command(name="cost", description="Calculates cost analysis of a cosmoteer ship.png")
+async def com(interaction: discord.Interaction, ship: discord.Attachment):
+    """
     try:
         # Prepare the request data
         args = {
@@ -265,6 +305,27 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
+    """
+    print(dt.now(),"received command")
+    await interaction.response.defer()
+    print(dt.now(),"deferred")
+
+    # Read the image bytes and encode them to base64
+    image_bytes = await ship.read()
+    base64_string = base64.b64encode(image_bytes).decode('utf-8')
+
+    # Create a file object for the original image
+    ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
+    try:
+        print(dt.now(),"requesting data")
+        data_returned,files_to_send= request_server({"boost": False, "draw_all_cot": False, "draw_all_com": False, "draw_cot": False, "draw_com": False, "draw": False, "flip_vectors": False, "analyze" : True})
+        print(dt.now(),"server responded")
+    except Exception as e:
+        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
+        await interaction.followup.send(text, file=ship)
+        return "Error: could not process ship"
+    # prepare the text response
+    
 
 
 @tree.command(name="full", description="Calculates the center of mass and cost analysis of a cosmoteer ship.png")
