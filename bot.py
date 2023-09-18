@@ -197,11 +197,9 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         response = requests.post(url, json=json_data)
         response.raise_for_status()
         print(dt.now(),"server responded")
-        
 
         # Get the response
         data_returned = response.json()
-        # if draw is false do not retrieve the center of mass image
         # Get the URL of the center of mass image
         url_stats = data_returned["analysis"]["url_analysis"]
         # Fetch the center of mass image
@@ -231,8 +229,8 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         )
 
         # Create a formatted table header with consistent column widths
-        table_header = "Category         | Percent        | Price\n"
-        table_header += "-----------------|----------------|--------------\n"
+        table_header =  "Category | Price (Percent)\n"
+        table_header += "---------|----------------\n"
 
         # Create a formatted table body with each category's data
         table_body = ""
@@ -240,12 +238,21 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
             percent = f"{analysis[category]['percent']*100:.2f}%"
             price = analysis[category]["price"]
             
-            # Format each column with padding to ensure consistent width
-            category_formatted = f"{category:<16}"
-            percent_formatted = f"{percent:<14}"
-            price_formatted = f"{price:<16}"
+            categories_rename = ["Total", "Crew", "Armor", "Weapons", "Thrust", 
+                        "Shield", "Storage", "Misc", "Power"]
+            # replace category name with categories_rename
+            category_idx = categories.index(category)
+            category_renamed = categories_rename[category_idx]
             
-            table_body += f"{category_formatted} | {percent_formatted} | {price_formatted}\n"
+            # Format each column with padding to ensure consistent width
+            category_formatted = f"{category_renamed:<8}"
+            
+            # Format each column with padding to ensure consistent width
+            # category_formatted = f"{category:<8}"
+            percent_formatted = f"{percent:<8}"
+            price_formatted = f"{price:<9} ({percent_formatted})"
+            
+            table_body += f"{category_formatted} | {price_formatted}\n"
 
         # Combine the header and body to form the table
         table = f"```\n{table_header}{table_body}```"
@@ -262,6 +269,156 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         text = "Error: could not process ship :\n\t"+str(e)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
+
+@tree.command(name="full", description="Calculates the center of mass and cost analysis of a cosmoteer ship.png")
+async def full(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False, draw: bool = True):
+    """
+    Calculates the center of mass of a cosmoteer ship.png.
+
+    Parameters:
+    - interaction: The Discord interaction object.
+    - ship: The attached image of the ship.
+    - boost: Whether to apply boost.
+    - draw_all_cot: Whether to draw all center of thrust lines.
+    - draw_all_com: Whether to draw all center of mass lines.
+    - draw_cot: Whether to draw center of thrust lines.
+    - draw_com: Whether to draw center of mass lines.
+    - draw: Whether to draw the output images.
+    """
+    
+    print(dt.now(),"received command")
+    await interaction.response.defer()
+    print(dt.now(),"deferred")
+
+    # Read the image bytes and encode them to base64
+    image_bytes = await ship.read()
+    base64_string = base64.b64encode(image_bytes).decode('utf-8')
+
+    # Create a file object for the original image
+    ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
+
+    try:
+        # Prepare the request data
+        args = {
+            "boost": boost,
+            "draw_all_cot": draw_all_cot,
+            "draw_all_com": draw_all_com,
+            "draw_cot": True,
+            "draw_com": True,
+            "draw": True,
+            "flip_vectors": flip_vectors,
+            "analyze" : True
+        }
+        json_data = json.dumps({'image': base64_string, 'args': args})
+
+        # Send the request to the server
+        url = API_URL
+        print(dt.now(),"requesting data")
+        response = requests.post(url, json=json_data)
+        response.raise_for_status()
+        print(dt.now(),"server responded")
+        
+
+        # Get the response
+        data_returned = response.json()
+        # if draw is false do not retrieve the center of mass image
+        if draw == True:
+            # Get the URL of the center of mass image
+            
+            url_com = data_returned['url_com']
+            # Fetch the center of mass image
+            print(dt.now(),"requesting image")
+            response_url_com = requests.get(url_com)
+            response_url_com.raise_for_status()
+            content_response = response_url_com.content
+            print(dt.now(),"server responded")
+
+            # Create a file object for the center of mass image
+            picture = discord.File(BytesIO(content_response), filename="output_file.png")
+            
+            # Prepare the list of files to send
+            files_to_send = [ship, picture]
+        else:
+            # Prepare the list of files to send
+            files_to_send = [ship]
+        # Prepare the text response
+        text = "use the /help command for more info\n"
+        if(data_returned['author']!=""):
+            text += f"Made by: {data_returned['author']}\n"
+        text += f"Center of mass: {round(data_returned['center_of_mass_x'], 2)}, {round(data_returned['center_of_mass_y'], 2)}\n"
+        text += f"Total mass: {round(data_returned['total_mass'], 2)}t\n"
+        text += f"Predicted max speed: {round(data_returned['top_speed'], 2)}m/s\n"
+        text += f"Total crew: {data_returned['crew']}\n"
+        text += f"Aprox cost: {data_returned['price']:,}\n"    
+        # Send the text response and files
+        print(dt.now(),"sending to discord")
+        await interaction.followup.send(text, files=files_to_send)
+        print(dt.now(),"sent to discord")
+        url_stats = data_returned["analysis"]["url_analysis"]
+        # Fetch the center of mass image
+        print(dt.now(),"requesting image")
+        response_url_stats = requests.get(url_stats)
+        response_url_stats.raise_for_status()
+        content_response = response_url_stats.content
+        print(dt.now(),"server responded")
+
+        # Create a file object for the center of mass image
+        picture = discord.File(BytesIO(content_response), filename="output_file.png")
+        
+        # Prepare the list of files to send
+        files_to_send2 = [picture]
+        analysis = data_returned["analysis"]
+
+        categories = ["total_price", "price_crew", "price_armor", "price_weapons", "price_mouvement", 
+                        "price_shield", "price_storage", "price_utility", "price_power"]
+
+        embed = discord.Embed(
+            title="Price analysis",
+            color=discord.Color.green()
+        )
+
+        # Create a formatted table header with consistent column widths
+        table_header =  "Category | Price (Percent)\n"
+        table_header += "---------|----------------\n"
+
+        # Create a formatted table body with each category's data
+        table_body = ""
+        for category in categories:
+            percent = f"{analysis[category]['percent']*100:.2f}%"
+            price = analysis[category]["price"]
+            
+            categories_rename = ["Total", "Crew", "Armor", "Weapons", "Thrust", 
+                        "Shield", "Storage", "Misc", "Power"]
+            # replace category name with categories_rename
+            category_idx = categories.index(category)
+            category_renamed = categories_rename[category_idx]
+            
+            # Format each column with padding to ensure consistent width
+            category_formatted = f"{category_renamed:<8}"
+            
+            # Format each column with padding to ensure consistent width
+            # category_formatted = f"{category:<8}"
+            percent_formatted = f"{percent:<8}"
+            price_formatted = f"{price:<9} ({percent_formatted})"
+            
+            table_body += f"{category_formatted} | {price_formatted}\n"
+
+        # Combine the header and body to form the table
+        table = f"```\n{table_header}{table_body}```"
+
+        # Add the table to the Discord embed
+        embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
+        
+        print(dt.now(), "sending to Discord")
+        await interaction.followup.send(embed=embed, files=files_to_send2)
+        print(dt.now(), "sent to Discord")
+
+    except Exception as e:
+        print(dt.now(),"error",e)
+        text = "Error: could not process ship :\n\t"+str(e)
+        await interaction.followup.send(text, file=ship)
+        return "Error: could not process ship"
+
 
 @tree.command(name="ping", description="responds with the bot's latency")
 async def ping(interaction: discord.Interaction):
@@ -289,5 +446,5 @@ async def help(interaction: discord.Interaction):
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
     print(dt.now(),"help command sent")
 
-#client.run(os.getenv("DISCORDBOTAPI"))
+# client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
