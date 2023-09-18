@@ -225,8 +225,8 @@ async def com(interaction: discord.Interaction, ship: discord.Attachment):
         categories = ["total_price", "price_crew", "price_armor", "price_weapons", "price_mouvement", 
                         "price_shield", "price_storage", "price_utility", "price_power"]
         text_categories={"total_price":"total", "price_crew":"crew", "price_armor":"armor",
-                         "price_weapons":"weapons", "price_mouvement":"movement", "price_shield":"shield",
-                         "price_storage":"storage", "price_utility":"utility", "price_power":"power"}
+                         "price_weapons":"weapons", "price_mouvement":"thrust", "price_shield":"shield",
+                         "price_storage":"storage", "price_utility":"misc", "price_power":"power"}
 
         embed = discord.Embed(
             title="Price analysis",
@@ -362,11 +362,18 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         picture = discord.File(BytesIO(content_response), filename="output_file.png")
 
         # Prepare the list of files to send
-        files_to_send2 = [picture]
+        files_to_send = [ship, picture]
+
+        """
+        {"url_com": false, "center_of_mass_x": -0.481210071401729, "center_of_mass_y": 5.3820744081172505, "total_mass": 266.09999999999997, "top_speed": 0.0, "crew": 62, "price": 287760, "tags": ["chaingun", "small_reactor"], "author": "kine", "all_direction_speeds": {"NW": 0.0, "N": 0.0, "NE": 0.0, "E": 0.0, "SE": 0.0, "S": 0.0, "SW": 0.0, "W": 0.0}, "analysis": {"url_analysis": "https://i.ibb.co/P1YCgm7/c63c50987278.png", "total_price": {"price": 287760, "percent": 1}, "price_crew": {"price": 43600, "percent": 0.15151515151515152}, "price_weapons": {"price": 175800, "percent": 0.6109257714762302}, "price_armor": {"price": 0, "percent": 0.0}, "price_mouvement": {"price": 0, "percent": 0.0}, "price_power": {"price": 25000, "percent": 0.08687795385043091}, "price_shield": {"price": 0, "percent": 0.0}, "price_storage": {"price": 27360, "percent": 0.0950792326939116}}}
+        """
         analysis = data_returned["analysis"]
 
         categories = ["total_price", "price_crew", "price_armor", "price_weapons", "price_mouvement", 
                         "price_shield", "price_storage", "price_utility", "price_power"]
+        text_categories={"total_price":"total", "price_crew":"crew", "price_armor":"armor",
+                         "price_weapons":"weapons", "price_mouvement":"thrust", "price_shield":"shield",
+                         "price_storage":"storage", "price_utility":"misc", "price_power":"power"}
 
         embed = discord.Embed(
             title="Price analysis",
