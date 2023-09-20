@@ -29,7 +29,6 @@ import base64
 import re
 import requests
 
-
 class OBNodeType(enum.Enum):
     Unset = 0
     Data = 1
@@ -61,7 +60,8 @@ class Ship():
             self.compressed_image_data = self.compressed_image_data[9:]
             self.version = 2
 
-        self.buffer = io.BytesIO(gzip.decompress(self.compressed_image_data))
+        self.raw_data=gzip.decompress(self.compressed_image_data)
+        self.buffer = io.BytesIO(self.raw_data)
         self.data = self.decode()
 
     def write(self, new_image: Image.Image = None) -> Image.Image:
@@ -158,7 +158,7 @@ class Ship():
             if byte & 0x80 == 0:
                 break
             if i>2:
-                # print("Warning: string length is too long")
+                print("Warning: string length is too long")
                 break
             i += 1
 
@@ -208,7 +208,7 @@ class Ship():
                 value = self.decode()
                 if isinstance(value, bytes):
                     if (
-                        key in ('Rotation', 'Orientation', 'Version', 'FlightDirection', 'FormationOrder', 'Key', 'Max', 'Min', "ID")
+                        key in ('Rotation', 'Orientation', 'Version', 'FlightDirection', 'FormationOrder', 'Key', 'Max', 'Min', "ID", "BuildMirrorAxis", "PaintMirrorAxis")
                         and len(value) == 4
                     ):
                         value = struct.unpack('<i', value)[0]
@@ -223,7 +223,7 @@ class Ship():
                         value = struct.unpack('<I', value)[0]
                     elif key in ('Location', 'Cell', "Key") and len(value) == 8:
                         value = list(struct.unpack('<ll', value))
-                    elif key in ('FlipX', 'FlipY', "Value") and len(value) == 1:
+                    elif key in ('FlipX', 'FlipY', "Value", "BuildMirrorEnabled", "PaintMirrorEnabled") and len(value) == 1:
                         value = bool(value[0])
                     elif key in ('ID', 'Name', 'Author', 'RoofBaseTexture', 'ShipRulesID', 'Description', 'ComponentID', 'PartID', 'IDString', "Value"):
                         value = self.read_string(io.BytesIO(value))
@@ -234,10 +234,14 @@ class Ship():
                         c4 = value[12:16].hex().upper()
                         value = (c1, c2, c3, c4)
                     else:
-                        # print('Unhandled key with binary value:', {key: value})
+                        print('Unhandled key with binary value:', {key: value})
                         continue
 
                 d[key] = value
+                try:
+                    print(key, value, len(value))
+                except:
+                    print(key, value)
             return d
         elif _type == OBNodeType.Link.value:
             subtype = self.buffer.read(1)[0]
@@ -250,6 +254,9 @@ class Ship():
             return None
         else:
             raise TypeError(f'Unexpected type {_type}')
+    
+    def __str__(self):
+        return str(self.data)
 
     def encode(self, data_node, byte_data: bytearray=None) -> bytearray:
         if byte_data is None:
@@ -260,9 +267,7 @@ class Ship():
             return byte_data
         
         elif isinstance(data_node, (str, int, float, bool, tuple, bytes)) or self.is_2int_list(data_node):
-            byte_data.append(OBNodeType.Data.value)
-            print(data_node)
-            
+            byte_data.append(OBNodeType.Data.value)            
             if isinstance(data_node, str):
                 string_data = self.write_string(data_node)
                 byte_data = self.write_varint(len(string_data), byte_data)
@@ -271,7 +276,10 @@ class Ship():
             elif isinstance(data_node, bool):
                 data = bytearray([data_node])
             elif isinstance(data_node, int):
-                data = struct.pack("<i", data_node)
+                if(data_node<0):
+                    data = struct.pack("<i", data_node)
+                else:
+                    data = struct.pack("<I", data_node)
             elif isinstance(data_node, float):
                 data = struct.pack("<f", data_node)
             elif isinstance(data_node, tuple):

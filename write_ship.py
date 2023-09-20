@@ -54,7 +54,7 @@ new_ship=Ship("ships/engine.ship.png")
 new_ship.write()
 #print(ship.data)
 """
-
+"""
 from PIL import Image
 import numpy as np
 import gzip
@@ -84,3 +84,39 @@ if __name__ == "__main__":
         print(uncompressed_data)
     except Exception as e:
         print("An error occurred while opening the image:", str(e))
+
+        ['Author', 'BuildCenterlineNESW', 'BuildCenterlineNWSE', 'BuildCenterlineX', 'BuildCenterlineY', 'CrewSourceRoles', 'CrewSourceTargets', 'Decals1', 'Decals2', 'Decals3', 'DefaultAttackFollowAngle', 'DefaultAttackRadius', 'DefaultAttackRotation', 'Description', 'Doors', 'FlightDirection', 'FormationOrder', 'Name', 'NewFlexResourceGridTypes', 'PaintCenterlineNESW', 'PaintCenterlineNWSE', 'PaintCenterlineX', 'PaintCenterlineY', 'PartControlGroups', 'Parts', 'PartUIColorValues', 'PartUIToggleStates', 'ResourceConsumptionToggles', 'ResourceSupplierTargets', 'ResourceSupplyToggles', 'Roles', 'RoofBaseColor', 'RoofBaseTexture', 'RoofDecalColor1', 'RoofDecalColor2', 'RoofDecalColor3', 'ShipRulesID', 'Version', 'WeaponDirectControlBindings', 'WeaponSelfTargets', 'WeaponShipRelativeTargets']
+
+"""
+from PIL import Image
+
+image_path = "ships/targeted_prism.ship.png"  # Replace with the path to your image
+my_ship1=Ship(image_path)
+#print(my_ship.__str__()[:1000])
+new_image=my_ship1.write(Image.open("ships/huh.ship.png"))
+#save the image
+new_image.save("ships/out.ship.png")
+
+my_ship2=Ship("ships/out.ship.png")
+print(my_ship1.raw_data==my_ship2.raw_data)
+#print the data around the first difference in hex
+for i in range(len(my_ship1.raw_data)):
+    if my_ship1.raw_data[i]!=my_ship2.raw_data[i]:
+        #print(my_ship1.raw_data[i-100:i+100])
+        #print the bytes separated by spaces but if the byte is a character, print the character
+        print(" ".join([chr(x) if x>=32 and x<=126 else hex(x) for x in my_ship1.raw_data[i-100:i+50]]))
+        #print(" ".join([hex(x) for x in my_ship1.raw_data[i-100:i+50]]))
+        print("===================================")
+        print(" ".join([chr(x) if x>=32 and x<=126 else hex(x) for x in my_ship2.raw_data[i-100:i+50]]))
+        #print(" ".join([hex(x) for x in my_ship2.raw_data[i-10:i+50]]))
+        break
+
+print(my_ship1.data==my_ship2.data)
+#print all of the differences
+for key in my_ship1.data.keys():
+    if my_ship1.data[key]!=my_ship2.data[key]:
+        print(key)
+        print(my_ship1.data[key])
+        print("===================================")
+        print(my_ship2.data[key])
+        print()
