@@ -69,206 +69,21 @@ async def on_ready():
     # Print a message indicating that the bot is ready
     print(dt.now(),"Bot is ready")
 
+
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False, draw: bool = True):
-    """
-    Calculates the center of mass of a cosmoteer ship.png.
-
-    Parameters:
-    - interaction: The Discord interaction object.
-    - ship: The attached image of the ship.
-    - boost: Whether to apply boost.
-    - draw_all_cot: Whether to draw all center of thrust lines.
-    - draw_all_com: Whether to draw all center of mass lines.
-    - draw_cot: Whether to draw center of thrust lines.
-    - draw_com: Whether to draw center of mass lines.
-    - draw: Whether to draw the output images.
-    """
-    
-    print(dt.now(),"received command")
-    await interaction.response.defer()
-    print(dt.now(),"deferred")
-
-    # Read the image bytes and encode them to base64
-    image_bytes = await ship.read()
-    base64_string = base64.b64encode(image_bytes).decode('utf-8')
-
-    # Create a file object for the original image
-    ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
-
-    try:
-        # Prepare the request data
-        args = {
-            "boost": boost,
-            "draw_all_cot": draw_all_cot,
-            "draw_all_com": draw_all_com,
-            "draw_cot": True,
-            "draw_com": True,
-            "draw": True,
-            "flip_vectors": flip_vectors
-        }
-        json_data = json.dumps({'image': base64_string, 'args': args})
-
-        # Send the request to the server
-        url = API_URL
-        print(dt.now(),"requesting data")
-        response = requests.post(url, json=json_data)
-        response.raise_for_status()
-        print(dt.now(),"server responded")
-        
-
-        # Get the response
-        data_returned = response.json()
-        # if draw is false do not retrieve the center of mass image
-        if draw == True:
-            # Get the URL of the center of mass image
-            
-            url_com = data_returned['url_com']
-            # Fetch the center of mass image
-            print(dt.now(),"requesting image")
-            response_url_com = requests.get(url_com)
-            response_url_com.raise_for_status()
-            content_response = response_url_com.content
-            print(dt.now(),"server responded")
-
-            # Create a file object for the center of mass image
-            picture = discord.File(BytesIO(content_response), filename="output_file.png")
-            
-            # Prepare the list of files to send
-            files_to_send = [ship, picture]
-        else:
-            # Prepare the list of files to send
-            files_to_send = [ship]
+async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False):
+    command = tree.get_command('full')
+    await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com)
 
 
-        # Prepare the text response
-        text = "use the /help command for more info\n"
-        if(data_returned['author']!=""):
-            text += f"Made by: {data_returned['author']}\n"
-        text += f"Center of mass: {round(data_returned['center_of_mass_x'], 2)}, {round(data_returned['center_of_mass_y'], 2)}\n"
-        text += f"Total mass: {round(data_returned['total_mass'], 2)}t\n"
-        text += f"Predicted max speed: {round(data_returned['top_speed'], 2)}m/s\n"
-        text += f"Total crew: {data_returned['crew']}\n"
-        text += f"Aprox cost: {data_returned['price']:,}\n"
-
-        # Send the text response and files
-        print(dt.now(),"sending to discord")
-        await interaction.followup.send(text, files=files_to_send)
-        print(dt.now(),"sent to discord")
-
-    except Exception as e:
-        print(dt.now(),"error",e)
-        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
-        await interaction.followup.send(text, file=ship)
-        return "Error: could not process ship"
-
-@tree.command(name="cost", description="Calculates cost analysis of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment):
-
-    
-    print(dt.now(),"received command")
-    await interaction.response.defer()
-    print(dt.now(),"deferred")
-
-    # Read the image bytes and encode them to base64
-    image_bytes = await ship.read()
-    base64_string = base64.b64encode(image_bytes).decode('utf-8')
-
-    # Create a file object for the original image
-    ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
-
-    try:
-        # Prepare the request data
-        args = {
-            "boost": False,
-            "draw_all_cot": False,
-            "draw_all_com": False,
-            "draw_cot": False,
-            "draw_com": False,
-            "draw": False,
-            "flip_vectors": False,
-            "analyze" : True
-        }
-        json_data = json.dumps({'image': base64_string, 'args': args})
-
-        # Send the request to the server
-        url = API_URL
-        print(dt.now(),"requesting data")
-        response = requests.post(url, json=json_data)
-        response.raise_for_status()
-        print(dt.now(),"server responded")
-        
-
-        # Get the response
-        data_returned = response.json()
-        # if draw is false do not retrieve the center of mass image
-        # Get the URL of the center of mass image
-        url_stats = data_returned["analysis"]["url_analysis"]
-        # Fetch the center of mass image
-        print(dt.now(),"requesting image")
-        response_url_stats = requests.get(url_stats)
-        response_url_stats.raise_for_status()
-        content_response = response_url_stats.content
-        print(dt.now(),"server responded")
-
-        # Create a file object for the center of mass image
-        picture = discord.File(BytesIO(content_response), filename="output_file.png")
-        
-        # Prepare the list of files to send
-        files_to_send = [ship, picture]
-
-        """
-        {"url_com": false, "center_of_mass_x": -0.481210071401729, "center_of_mass_y": 5.3820744081172505, "total_mass": 266.09999999999997, "top_speed": 0.0, "crew": 62, "price": 287760, "tags": ["chaingun", "small_reactor"], "author": "kine", "all_direction_speeds": {"NW": 0.0, "N": 0.0, "NE": 0.0, "E": 0.0, "SE": 0.0, "S": 0.0, "SW": 0.0, "W": 0.0}, "analysis": {"url_analysis": "https://i.ibb.co/P1YCgm7/c63c50987278.png", "total_price": {"price": 287760, "percent": 1}, "price_crew": {"price": 43600, "percent": 0.15151515151515152}, "price_weapons": {"price": 175800, "percent": 0.6109257714762302}, "price_armor": {"price": 0, "percent": 0.0}, "price_mouvement": {"price": 0, "percent": 0.0}, "price_power": {"price": 25000, "percent": 0.08687795385043091}, "price_shield": {"price": 0, "percent": 0.0}, "price_storage": {"price": 27360, "percent": 0.0950792326939116}}}
-        """
-        analysis = data_returned["analysis"]
-
-        categories = ["total_price", "price_crew", "price_armor", "price_weapons", "price_mouvement", 
-                        "price_shield", "price_storage", "price_utility", "price_power"]
-        text_categories={"total_price":"total", "price_crew":"crew", "price_armor":"armor",
-                         "price_weapons":"weapons", "price_mouvement":"thrust", "price_shield":"shield",
-                         "price_storage":"storage", "price_utility":"misc", "price_power":"power"}
-
-        embed = discord.Embed(
-            title="Price analysis",
-            color=discord.Color.green()
-        )
-
-        # Create a formatted table header with consistent column widths
-        table_header =  "Category  | Percent | Price\n"
-        table_header += "----------|---------|----------\n"
-
-        # Create a formatted table body with each category's data
-        table_body = ""
-        for category in categories:
-            percent = f"{analysis[category]['percent']*100:.2f}%"
-            price = analysis[category]["price"]
-            
-            # Format each column with padding to ensure consistent width
-            category_formatted = f"{text_categories[category]:<9}"
-            percent_formatted = f"{percent:>7}"
-            price_formatted = f"{price:>8}"
-            
-            table_body += f"{category_formatted} | {percent_formatted} | {price_formatted}\n"
-
-        # Combine the header and body to form the table
-        table = f"```\n{table_header}{table_body}```"
-
-        # Add the table to the Discord embed
-        embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
-
-        print(dt.now(), "sending to Discord")
-        await interaction.followup.send(embed=embed, files=files_to_send)
-        print(dt.now(), "sent to Discord")
-
-    except Exception as e:
-        print(dt.now(),"error",e)
-        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
-        await interaction.followup.send(text, file=ship)
-        return "Error: could not process ship"
+@tree.command(name="cost", description="Calculates the cost analysis of a cosmoteer ship.png")
+async def cost(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False):
+    command = tree.get_command('full')
+    await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com)
 
 
 @tree.command(name="full", description="Calculates the center of mass and cost analysis of a cosmoteer ship.png")
-async def full(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False, draw: bool = True):
+async def full(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False):
     print(dt.now(),"received command")
     await interaction.response.defer()
     print(dt.now(),"deferred")
@@ -298,9 +113,8 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         print(dt.now(),"server responded")
         # Get the response
         data_returned = response.json()
-        if draw == True:
-            # Get the URL of the center of mass image
-            url_com = data_returned['url_com']
+        # Get the URL of the center of mass image
+        url_com = data_returned['url_com']
         # prepare the data
         center_of_mass_x = round(data_returned['center_of_mass_x'], 2)
         center_of_mass_y = round(data_returned['center_of_mass_y'], 2)
@@ -378,8 +192,7 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         # Create an Embed for the Stats image
         embed.set_image(url=url_stats)
         embeds = [embedcom, embed]
-        # await interaction.followup.send(text, embed=embed, files=files_to_send)
-        await interaction.followup.send(text, embeds=embeds)
+        await interaction.followup.send(text, embeds=embeds, files=[ship])
         print(dt.now(), "sent to Discord")
     except Exception as e:
         print(dt.now(),"error",e)
