@@ -197,7 +197,18 @@ class Ship():
             lst = []
             for _ in range(count):
                 elem = self.decode()
+                if isinstance(elem, bytes):
+                    elem = elem.decode('latin1') # if byte decode it again
+                try:
+                    elem = elem.replace('\x0c', '') # remove formfeed character
+                except :
+                    pass
+                try:
+                    elem = elem.replace('\f', '') # remove formfeed character
+                except :
+                    pass
                 lst.append(elem)
+                # print("decoded: ", elem)
             return lst
 
         elif _type == OBNodeType.ChildMap.value:
@@ -208,7 +219,7 @@ class Ship():
                 value = self.decode()
                 if isinstance(value, bytes):
                     if (
-                        key in ('Rotation', 'Orientation', 'Version', 'FlightDirection', 'FormationOrder', 'Key', 'Max', 'Min', "ID", "BuildMirrorAxis", "PaintMirrorAxis")
+                        key in ('Rotation', 'Orientation', 'Version', 'FlightDirection', 'FormationOrder', 'Key', 'Max', 'Min', "ID", "BuildMirrorAxis", "PaintMirrorAxis", 'AssignmentPriority') # add AssignmentPriority
                         and len(value) == 4
                     ):
                         value = struct.unpack('<i', value)[0]
@@ -223,7 +234,7 @@ class Ship():
                         value = struct.unpack('<I', value)[0]
                     elif key in ('Location', 'Cell', "Key") and len(value) == 8:
                         value = list(struct.unpack('<ll', value))
-                    elif key in ('FlipX', 'FlipY', "Value", "BuildMirrorEnabled", "PaintMirrorEnabled") and len(value) == 1:
+                    elif key in ('FlipX', 'FlipY', "Value", "BuildMirrorEnabled", "PaintMirrorEnabled", 'AutoFillFromLower') and len(value) == 1: # add AutoFillFromLower
                         value = bool(value[0])
                     elif key in ('ID', 'Name', 'Author', 'RoofBaseTexture', 'ShipRulesID', 'Description', 'ComponentID', 'PartID', 'IDString', "Value"):
                         value = self.read_string(io.BytesIO(value))
