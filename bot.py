@@ -200,6 +200,68 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
 
+@tree.command(name="compare", description="Compares two ships (id1 and id2)")
+async def compare(interaction: discord.Interaction, ship1: int, ship2: int):
+    print(dt.now(),"received command")
+    await interaction.response.defer()
+    print(dt.now(),"deferred")
+    url = 'https://cosmo-api-six.vercel.app/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2)
+    print(dt.now(),"requesting data")
+    response = requests.get(url)
+    response.raise_for_status()
+    print(dt.now(),"server responded")
+    # Get the response
+    data_returned = response.json()
+    # Get the URL of the chart
+    url_stats = data_returned["url_analysis"]
+    analysis = data_returned
+    embed = discord.Embed(
+        title="Price analysis for ships " + str(ship1) + " and " + str(ship2),
+        color=discord.Color.green()
+    )
+    # Create a formatted table header with consistent column widths
+    table_header =  "Category | Ship1(%)| Ship2(%)\n"
+    table_header += "---------|---------|----------\n"
+    # Create a formatted table body with each category's data
+    table_body = ""
+    total1 = f"{analysis['total_price1']['percent']*100:.2f}%"
+    total2 = f"{analysis['total_price2']['percent']*100:.2f}%"
+    table_body += f"total    | {total1:>7} | {total2:>7}\n"
+    price_crew1 = f"{analysis['price_crew1']['percent']*100:.2f}%"
+    price_crew2 = f"{analysis['price_crew2']['percent']*100:.2f}%"
+    table_body += f"crew     | {price_crew1:>7} | {price_crew2}\n"
+    price_armor1 = f"{analysis['price_armor1']['percent']*100:.2f}%"
+    price_armor2 = f"{analysis['price_armor2']['percent']*100:.2f}%"
+    table_body += f"armor    | {price_armor1:>7} | {price_armor2:>7}\n"
+    price_weapons1 = f"{analysis['price_weapons1']['percent']*100:.2f}%"
+    price_weapons2 = f"{analysis['price_weapons2']['percent']*100:.2f}%"
+    table_body += f"weapons  | {price_weapons1:>7} | {price_weapons2:>7}\n"
+    price_mouvement1 = f"{analysis['price_mouvement1']['percent']*100:.2f}%"
+    price_mouvement2 = f"{analysis['price_mouvement2']['percent']*100:.2f}%"
+    table_body += f"thrust   | {price_mouvement1:>7} | {price_mouvement2:>7}\n"
+    price_shield1 = f"{analysis['price_shield1']['percent']*100:.2f}%"
+    price_shield2 = f"{analysis['price_shield2']['percent']*100:.2f}%"
+    table_body += f"shield   | {price_shield1:>7} | {price_shield2:>7}\n"
+    price_storage1 = f"{analysis['price_storage1']['percent']*100:.2f}%"
+    price_storage2 = f"{analysis['price_storage2']['percent']*100:.2f}%"
+    table_body += f"storage  | {price_storage1:>7} | {price_storage2:>7}\n"
+    price_utility1 = f"{analysis['price_utility1']['percent']*100:.2f}%"
+    price_utility2 = f"{analysis['price_utility2']['percent']*100:.2f}%"
+    table_body += f"misc     | {price_utility1:>7} | {price_utility2:>7}\n"
+    price_power1 = f"{analysis['price_power1']['percent']*100:.2f}%"
+    price_power2 = f"{analysis['price_power2']['percent']*100:.2f}%"
+    table_body += f"power    | {price_power1:>7} | {price_power2:>7}\n"
+    
+    # Combine the header and body to form the table
+    table = f"```\n{table_header}{table_body}```"
+    # Add the table to the Discord embed
+    embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
+    print(dt.now(), "sending to Discord")
+    # Create an Embed for the Stats image
+    embed.set_image(url=url_stats)
+    embeds = [embed]
+    await interaction.followup.send(embeds=embeds)
+    print(dt.now(), "sent to Discord")
 
 @tree.command(name="ping", description="responds with the bot's latency")
 async def ping(interaction: discord.Interaction):
