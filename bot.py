@@ -201,11 +201,11 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         return "Error: could not process ship"
 
 @tree.command(name="compare", description="Compares two ships (id1 and id2)")
-async def compare(interaction: discord.Interaction, ship1: int, ship2: int):
+async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scale: bool = False):
     print(dt.now(),"received command")
     await interaction.response.defer()
     print(dt.now(),"deferred")
-    url = 'https://cosmo-api-six.vercel.app/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2)
+    url = 'https://cosmo-api-six.vercel.app/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
     print(dt.now(),"requesting data")
     response = requests.get(url)
     response.raise_for_status()
