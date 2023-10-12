@@ -212,6 +212,26 @@ async def compare(interaction: discord.Interaction, ship1: int, ship2: int):
     print(dt.now(),"server responded")
     # Get the response
     data_returned = response.json()
+
+    # ship 1 url and name
+    urlship1 = data_returned["urlship1"]
+    shipname1 = data_returned["shipname1"]
+    embed1 = discord.Embed(
+        title="Ship1 : " + str(shipname1),
+        url="https://cosmo-lilac.vercel.app/ship/"+str(ship1),
+        color=discord.Color.green()
+    )
+    embed1.set_image(url=urlship1)
+    # ship 2 url and name
+    urlship2 = data_returned["urlship2"]
+    shipname2 = data_returned["shipname2"]
+    embed2 = discord.Embed(
+        title="Ship2 : " + str(shipname2),
+        url="https://cosmo-lilac.vercel.app/ship/"+str(ship2),
+        color=discord.Color.green()
+    )
+    embed2.set_image(url=urlship2)
+ 
     # Get the URL of the chart
     url_stats = data_returned["url_analysis"]
     analysis = data_returned
@@ -259,7 +279,7 @@ async def compare(interaction: discord.Interaction, ship1: int, ship2: int):
     print(dt.now(), "sending to Discord")
     # Create an Embed for the Stats image
     embed.set_image(url=url_stats)
-    embeds = [embed]
+    embeds = [embed1, embed2, embed]
     await interaction.followup.send(embeds=embeds)
     print(dt.now(), "sent to Discord")
 
