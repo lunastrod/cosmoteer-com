@@ -10,6 +10,7 @@ import base64
 from io import BytesIO
 import requests
 import json
+import random
 
 from datetime import datetime as dt
 
@@ -204,6 +205,13 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
 @tree.command(name="ping", description="responds with the bot's latency")
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message('Pong! {0}ms'.format(round(client.latency*1000)))
+
+@tree.command(name="hmmm", description="responds with hmmm")
+async def ping(interaction: discord.Interaction):
+    if(random.random()<0.05):
+        await interaction.response.send_message("oh no, not again, please no, not the hmmm, anything but the hmmm, please")
+    else:
+        await interaction.response.send_message("hmmm")
 
 @tree.command(name="help", description="shows the list of commands")
 async def help(interaction: discord.Interaction):
