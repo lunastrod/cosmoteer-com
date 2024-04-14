@@ -24,7 +24,8 @@ tree = app_commands.CommandTree(client)
 
 short_version_text="Made by LunastroD, Aug 2023 - Sep 2023"
 version_text=short_version_text+", for the Excelsior discord server and the Cosmoteer community :3\n- Check out the source code at <https://github.com/lunastrod/cosmoteer-com>"
-help_text=version_text+"""/ping: responds with the bot's latency
+help_text=version_text+"""
+/ping: responds with the bot's latency
 
 /com: Calculates both the center of mass and the cost analysis of a cosmoteer ship.png
 parameters:
