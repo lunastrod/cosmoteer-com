@@ -40,7 +40,7 @@ parameters:
 - ship2: contains the second ship id.
 
 common questions:
-does the bot consider the lateral thrust of each thruster? yes
+the bot considers the lateral thrust of each thruster
 the bot doesn't work with modded parts, rocket thrusters, medium/big hyperdrives or any newer parts
 """
 
