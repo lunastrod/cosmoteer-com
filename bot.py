@@ -24,29 +24,23 @@ tree = app_commands.CommandTree(client)
 
 short_version_text="Made by LunastroD, Aug 2023 - Sep 2023"
 version_text=short_version_text+", for the Excelsior discord server and the Cosmoteer community :3\n- Check out the source code at <https://github.com/lunastrod/cosmoteer-com>"
-help_text=version_text+"""
-/ping: responds with the bot's latency
+help_text=version_text+"""/ping: responds with the bot's latency
 
-/com: Calculates the center of mass of a cosmoteer ship.png
-- parameters:
- - ship: the .ship.png file of the ship. Usually found in C:\\Users\\YOUR USERNAME\\Saved Games\\Cosmoteer\\YOUR STEAM ID\\Saved Ships
- - boost: turns boosters on or off. Default: on
- - flipvectors: flips the thrust vectors to avoid overlap. Default: off
- - strafecot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
- - partcom: draws the center of mass of each part. Default: off
- - draw: draws the output image. Default: on
-/cost: Calculates cost analysis of a cosmoteer ship.png
-- parameters:
- - ship: the .ship.png file of the ship. Usually found in C:\\Users\\YOUR USERNAME\\Saved Games\\Cosmoteer\\YOUR STEAM ID\\Saved Ships
-/full: executes both /com and /cost
-- common questions:
- - does the bot consider the 5% lateral thrust of each thruster? yes
- - does the bot consider engine room buff? yes
- - is the cot exact? it should be
- - is the com exact? no, it's a decent approximation, it should be inside the green circle
- - is the max speed exact? no, it's an approximation, assume ±1%, and it assumes your ship is balanced
+/com: Calculates both the center of mass and the cost analysis of a cosmoteer ship.png
+parameters:
+- ship: the .ship.png file of the ship. Usually found in C:\Users\YOUR USERNAME\Saved Games\Cosmoteer\YOUR STEAM ID\Saved Ships
+- flipvectors: flips the thrust vectors to avoid overlap. Default: off
+- draw_all_cot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
+- draw_all_com: draws the center of mass of each part. Default: off
 
-- If you notice any mistakes on things like the total mass or the speed, ping LunastroD"""
+/compare: Compare two ships submitted to "cosmoteer ship library" (https://cosmo-lilac.vercel.app/)
+parameters:
+- ship1: contains the first ship id. Ship ids are usually found in the website url when selected
+- ship2: contains the second ship id.
+
+common questions:
+does the bot consider the lateral thrust of each thruster? yes
+"""
 
 @client.event
 async def on_ready():
