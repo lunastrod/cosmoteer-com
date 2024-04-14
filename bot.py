@@ -28,19 +28,18 @@ help_text=version_text+"""/ping: responds with the bot's latency
 
 /com: Calculates both the center of mass and the cost analysis of a cosmoteer ship.png
 parameters:
-- ship: the .ship.png file of the ship. Usually found in C:\Users\YOUR USERNAME\Saved Games\Cosmoteer\YOUR STEAM ID\Saved Ships
+- ship: the .ship.png file of the ship. Usually found in C:\\Users\\YOUR USERNAME\\Saved Games\\Cosmoteer\\YOUR STEAM ID\\Saved Ships
 - flipvectors: flips the thrust vectors to avoid overlap. Default: off
 - draw_all_cot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
 - draw_all_com: draws the center of mass of each part. Default: off
 
-/compare: Compare two ships submitted to "cosmoteer ship library" (https://cosmo-lilac.vercel.app/)
+/compare: Compare two ships submitted to "cosmoteer ship library" <https://cosmo-lilac.vercel.app/>
 parameters:
 - ship1: contains the first ship id. Ship ids are usually found in the website url when selected
 - ship2: contains the second ship id.
 
 common questions:
-does the bot consider the lateral thrust of each thruster? yes
-"""
+does the bot consider the lateral thrust of each thruster? yes"""
 
 @client.event
 async def on_ready():
