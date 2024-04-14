@@ -40,7 +40,9 @@ parameters:
 - ship2: contains the second ship id.
 
 common questions:
-does the bot consider the lateral thrust of each thruster? yes"""
+does the bot consider the lateral thrust of each thruster? yes
+the bot doesn't work with modded parts, rocket thrusters, medium/big hyperdrives or any newer parts
+"""
 
 @client.event
 async def on_ready():
