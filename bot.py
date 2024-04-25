@@ -41,7 +41,7 @@ parameters:
 
 common questions:
 the bot considers the lateral thrust of each thruster
-the bot doesn't work with modded parts, rocket thrusters, medium/big hyperdrives or any newer parts
+the bot doesn't work with modded parts
 """
 
 @client.event
