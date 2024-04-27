@@ -16,7 +16,8 @@ from datetime import datetime as dt
 
 #load_dotenv()
 
-API_URL = "https://cosmo-api-six.vercel.app/analyze"
+API_URL = "https://cosmo-api-six.vercel.app/"
+API_NEW = "https://api.cosmoship.duckdns.org/"
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -103,10 +104,16 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         }
         json_data = json.dumps({'image': base64_string, 'args': args})
         # Send the request to the server
-        url = API_URL
         print(dt.now(),"requesting data")
-        response = requests.post(url, json=json_data)
-        response.raise_for_status()
+        # try API_NEW and if it fails, try API_URL
+        try:
+            url = API_NEW + "analyze"
+            response = requests.post(url, json=json_data)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            url = API_URL + "analyze"
+            response = requests.post(url, json=json_data)
+            response.raise_for_status()
         print(dt.now(),"server responded")
         # Get the response
         data_returned = response.json()
@@ -202,10 +209,16 @@ async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scal
     print(dt.now(),"received command")
     await interaction.response.defer()
     print(dt.now(),"deferred")
-    url = 'https://cosmo-api-six.vercel.app/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
     print(dt.now(),"requesting data")
-    response = requests.get(url)
-    response.raise_for_status()
+    # try API_NEW and if it fails, try API_URL
+    try:
+        url = API_NEW + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError:
+        url = API_URL + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
+        response = requests.get(url)
+        response.raise_for_status()
     print(dt.now(),"server responded")
     # Get the response
     data_returned = response.json()
