@@ -17,6 +17,7 @@ from datetime import datetime as dt
 #load_dotenv()
 
 API_URL = "https://cosmo-api-six.vercel.app/analyze"
+API_URL2 = "https://api.cosmoshp.duckdns.org/analyze"
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -103,13 +104,25 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         }
         json_data = json.dumps({'image': base64_string, 'args': args})
         # Send the request to the server
-        url = API_URL
-        print(dt.now(),"requesting data")
-        response = requests.post(url, json=json_data)
-        response.raise_for_status()
-        print(dt.now(),"server responded")
-        # Get the response
-        data_returned = response.json()
+        data_returned=""
+        try:
+            url = API_URL2
+            print(dt.now(),"requesting data")
+            response = requests.post(url, json=json_data)
+            response.raise_for_status()
+            print(dt.now(),"server responded")
+            # Get the response
+            data_returned = response.json()
+        except:
+            print("retrying with alternative url")
+            url = API_URL
+            print(dt.now(),"requesting data")
+            response = requests.post(url, json=json_data)
+            response.raise_for_status()
+            print(dt.now(),"server responded")
+            # Get the response
+            data_returned = response.json()
+        
         # Get the URL of the center of mass image
         url_com = data_returned['url_com']
         # prepare the data
@@ -202,7 +215,10 @@ async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scal
     print(dt.now(),"received command")
     await interaction.response.defer()
     print(dt.now(),"deferred")
+    data_returned=""
+
     url = 'https://cosmo-api-six.vercel.app/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
+    #url = 'https://api.cosmoship.duckdns.org/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
     print(dt.now(),"requesting data")
     response = requests.get(url)
     response.raise_for_status()
