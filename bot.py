@@ -17,7 +17,7 @@ from datetime import datetime as dt
 #load_dotenv()
 
 API_URL = "https://cosmo-api-six.vercel.app/analyze"
-API_URL2 = "https://api.cosmoshp.duckdns.org/analyze"
+API_URL2 = "https://api.cosmoship.duckdns.org/analyze"
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
