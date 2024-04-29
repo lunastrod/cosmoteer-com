@@ -329,7 +329,8 @@ async def help(interaction: discord.Interaction):
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
     print(dt.now(),"help command sent")
 
-def rps(player_pick):
+@tree.command(name="elim ship rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
+async def rps(player_pick):
     ships={"cannon wall":{"wins":["avoider"]},
            "avoider"    :{"wins":["dc spinner"]},
            "dc spinner" :{"wins":["cannon wall"]}
@@ -356,6 +357,9 @@ def rps(player_pick):
         print(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; Cosmoteer Design Tools wins!")
     else:
         print(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
-        
+
+
+rps("dc spinner         ")
+
 #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
