@@ -16,8 +16,12 @@ from datetime import datetime as dt
 
 #load_dotenv()
 
+
+
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
+
+
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -117,6 +121,7 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         print(dt.now(),"server responded")
         # Get the response
         data_returned = response.json()
+
         # Get the URL of the center of mass image
         url_com = data_returned['url_com']
         # prepare the data
