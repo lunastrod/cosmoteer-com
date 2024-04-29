@@ -329,52 +329,33 @@ async def help(interaction: discord.Interaction):
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
     print(dt.now(),"help command sent")
 
-@tree.command(name="elim ship rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
-async def rps(interaction: discord.Interaction, choice: str = ""):
-    player_pick = -1
-    player_win = False
+def rps(player_pick):
+    ships={"cannon wall":{"wins":["avoider"]},
+           "avoider"    :{"wins":["dc spinner"]},
+           "dc spinner" :{"wins":["cannon wall"]}
+    }
 
-    computer_pick = random.randint(0, 2) # computer_choice will display on results, while computer_pick is used in calcs
-    computer_choice = ""
-    if computer_pick == 0:
-        computer_choice = "cannon wall"
-    elif computer_pick == 1:
-        computer_choice = "avoider"
+    player_pick=player_pick.lower().strip()
+    computer_pick = random.choice(list(ships.keys()))
+
+    if(player_pick not in ships):
+        print("You need to pick between "+', '.join(list(ships.keys())))
+        return
+    player_win=False
+    computer_win=False
+    print(player_pick,computer_pick)
+    if(computer_pick in ships[player_pick]["wins"]):
+        player_win=True
+    elif(player_pick in ships[computer_pick]["wins"]):
+        computer_win=True
+
+
+    if player_win == True: # Display results to user
+        print(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; player wins!")
+    elif computer_win:
+        print(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; Cosmoteer Design Tools wins!")
     else:
-        computer_choice = "dc spinner"
-
-    if choice.lower() == "cannon wall": # Simplify the user input into one integer for calcs
-        player_pick = 0
-    elif choice.lower() == ("avoider" or "hl avoider"):
-        player_pick = 1
-    elif choice.lower() == ("dc spinner" or "spinner"):
-        player_pick = 2
-    else:
-        await interaction.response.send_message("You need to pick either `cannon wall`, `avoider`, or `dc spinner`!")
-
-    # Rock-paper-scissors algorithm
-    if not (player_pick < 0 and player_pick > 2):
-        if player_pick == computer_pick: # Check for draw
-            await interaction.response.send_message(f"Both {str(discord.ClientUser)} and Cosmoteer Design Tools picked {choice}; it is a draw!")
-        if player_pick == 0: # Player picks cannon wall
-            if computer_pick == 1:
-                player_win = True
-            elif computer_pick == 2:
-                player_win = False
-        if player_pick == 1: # Player picks avoider
-            if computer_pick == 0:
-                player_win = False
-            elif computer_pick == 2:
-                player_win = True
-        if player_pick == 2: # Player picks DC Spinner
-            if computer_pick == 0:
-                player_win = True
-            elif computer_pick == 1:
-                player_win = False
-        if player_win == True: # Display results to user
-            await interaction.response.send_message(f"{str(discord.ClientUser)} picked `{choice}` and Cosmoteer Design Tools picked `{computer_choice}`; {str(discord.ClientUser)} wins!")
-        else:
-            await interaction.response.send_message(f"{str(discord.ClientUser)} picked `{choice}` and Cosmoteer Design Tools picked `{computer_choice}`; Cosmoteer Design Tools wins!")
-
+        print(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
+        
 #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
