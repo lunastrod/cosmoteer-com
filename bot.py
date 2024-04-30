@@ -332,7 +332,7 @@ async def help(interaction: discord.Interaction):
     print(dt.now(),"help command sent")
 
 @tree.command(name="elim_rps", description='play rock-paper-scissors, but with elimination archtypes!')
-async def rps(interaction: discord.Interaction, choice: str):
+async def rps(interaction: discord.Interaction, player_pick: str):
     ships={"cannon wall":{"wins":["avoider"]},
            "avoider"    :{"wins":["dc spinner"]},
            "dc spinner" :{"wins":["cannon wall"]}
