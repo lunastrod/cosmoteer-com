@@ -342,7 +342,7 @@ async def rps(interaction: discord.Interaction, player_pick: str):
     computer_pick = random.choice(list(ships.keys()))
 
     if(player_pick not in ships):
-        await interaction.response.send_message("You need to pick between "+', '.join(list(ships.keys())))
+        await interaction.response.send_message(f"Error:{player_pick} You need to pick between "+', '.join(list(ships.keys())))
         return
     player_win=False
     computer_win=False
@@ -353,11 +353,11 @@ async def rps(interaction: discord.Interaction, player_pick: str):
 
 
     if player_win == True: # Display results to user
-        await interaction.response.send_message(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; player wins!")
+        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; {interaction.user.display_name} wins!")
     elif computer_win:
-        await interaction.response.send_message(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; Cosmoteer Design Tools wins!")
+        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; Cosmoteer Design Tools wins!")
     else:
-        await interaction.response.send_message(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
+        await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
 
 
 #client.run(os.getenv("DISCORDBOTAPI"))
