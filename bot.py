@@ -329,5 +329,37 @@ async def help(interaction: discord.Interaction):
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
     print(dt.now(),"help command sent")
 
+@tree.command(name="elim ship rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
+async def rps(player_pick):
+    ships={"cannon wall":{"wins":["avoider"]},
+           "avoider"    :{"wins":["dc spinner"]},
+           "dc spinner" :{"wins":["cannon wall"]}
+    }
+
+    player_pick=player_pick.lower().strip()
+    computer_pick = random.choice(list(ships.keys()))
+
+    if(player_pick not in ships):
+        print("You need to pick between "+', '.join(list(ships.keys())))
+        return
+    player_win=False
+    computer_win=False
+    print(player_pick,computer_pick)
+    if(computer_pick in ships[player_pick]["wins"]):
+        player_win=True
+    elif(player_pick in ships[computer_pick]["wins"]):
+        computer_win=True
+
+
+    if player_win == True: # Display results to user
+        print(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; player wins!")
+    elif computer_win:
+        print(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; Cosmoteer Design Tools wins!")
+    else:
+        print(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
+
+
+rps("dc spinner         ")
+
 #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
