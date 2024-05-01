@@ -2,9 +2,7 @@ import discord
 from discord import app_commands
 import secret_token
 
-#from dotenv import load_dotenv
-#import os
-#import center_of_mass
+import fight_db
 
 import base64
 from io import BytesIO
@@ -14,14 +12,11 @@ import random
 
 from datetime import datetime as dt
 
-#load_dotenv()
-
-
 
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
-
+db = fight_db.FightDB()
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -359,6 +354,95 @@ async def rps(interaction: discord.Interaction, player_pick: str):
     else:
         await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
 
+@tree.command(name="db_add_fight", description='adds a new fight to the database')
+async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
+    shipname1=shipname1.lower().strip()
+    shipname2=shipname2.lower().strip()
+    result=result.lower().strip()
+    if result=="win" or result=="w":
+        result=fight_db.FIGHT_RESULT.WIN
+    elif result=="lose" or result=="l":
+        result=fight_db.FIGHT_RESULT.WIN
+        temp=shipname1
+        shipname1=shipname2
+        shipname2=temp
+    elif result=="draw" or result=="d":
+        result=fight_db.FIGHT_RESULT.DRAW
+    else:
+        await interaction.response.send_message(f"Error: result must be 'win', 'lose' or 'draw'")
+        return
+
+    author=str(interaction.user.id)
+    author_name=interaction.user.display_name
+    try:
+        db.insert_fight(shipname1, shipname2, author, author_name, result)
+        winner_text=""
+        if result==fight_db.FIGHT_RESULT.WIN:
+            winner_text="the winner is "+shipname1
+        elif result==fight_db.FIGHT_RESULT.DRAW:
+            winner_text="it is a draw"
+        await interaction.response.send_message(f"In a fight between {shipname1} and {shipname2}, {winner_text}, according to {author_name}")
+    except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+    
+@tree.command(name="db_add_ship", description='adds a new ship to the database')
+async def rps(interaction: discord.Interaction, shipname: str):
+    shipname=shipname.lower().strip()
+    author=str(interaction.user.id)
+    author_name=interaction.user.display_name
+    try:
+        db.add_ship(shipname, author, author_name)
+        await interaction.response.send_message(f"Ship {shipname} added to the database")
+    except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+    
+@tree.command(name="db_remove_fight", description='removes a fight from the database')
+async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str):
+    shipname1=shipname1.lower().strip()
+    shipname2=shipname2.lower().strip()
+    author=str(interaction.user.id)
+    try:
+        db.remove_fight(shipname1, shipname2, author)
+        await interaction.response.send_message(f"Fight between {shipname1} and {shipname2} removed from the database")
+    except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+
+@tree.command(name="db_get_counters", description='gets the counters of a ship from the database')
+async def rps(interaction: discord.Interaction, shipname: str):
+    shipname=shipname.lower().strip()
+    try:
+        counters=db.get_counters(shipname)
+        text="Counters for "+shipname+":\n"
+        for counter in counters:
+            text+=f"{counter} : {', '.join(counters[counter])}\n"
+        await interaction.response.send_message(text)
+    except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+    
+@tree.command(name="db_simulate_fight", description='simulates a fight between two ships')
+async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str):
+    shipname1=shipname1.lower().strip()
+    shipname2=shipname2.lower().strip()
+    try:
+        result=db.simulate_fight(shipname1, shipname2)
+        people_win=result.get(fight_db.FIGHT_RESULT.WIN)
+        if people_win==None:
+            people_win=[]
+        people_draw=result.get(fight_db.FIGHT_RESULT.DRAW)
+        if people_draw==None:
+            people_draw=[]
+        people_lose=result.get(fight_db.FIGHT_RESULT.LOSE)
+        if people_lose==None:
+            people_lose=[]
+        text=f"In a fight between {shipname1} and {shipname2}, the results are:\n {len(people_win)} people think {shipname1} would win\n {len(people_draw)} people think it would be a draw\n {len(people_lose)} people think {shipname2} would win"
+        await interaction.response.send_message(text)
+    except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
 
 #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
