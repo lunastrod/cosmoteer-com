@@ -444,5 +444,17 @@ async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str):
         await interaction.response.send_message(f"Error:{e}")
         return
 
+@tree.command(name="db_list_ships", description='lists all ships in the database')
+async def rps(interaction: discord.Interaction):
+    try:
+        ships=db.get_ships()
+        text="Ships in the database:\n"
+        for ship in ships:
+            text+=f"- {ship}\n"
+        await interaction.response.send_message(text)
+    except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+
 #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
