@@ -77,7 +77,7 @@ class FightDB:
             else:
                 # Check if the ship is shipname1 or shipname2, shipname1 is the ship that won
                 if ship1 == ship_name:
-                    if ship1 in wins:
+                    if ship2 in wins:
                         wins[ship2].append(author_name)
                     else:
                         wins[ship2] = [author_name]
