@@ -90,6 +90,7 @@ class FightDB:
     
         return wins, draws, losses
     def get_unknown_matchups(self, shipname):
+        """
         # Get all ships that the specified ship has not fought against
         # check if the ship exists
         if not self.ship_exists(shipname):
@@ -100,6 +101,16 @@ class FightDB:
             if self.cur.fetchone():
                 ships.remove(ship)
         return ships
+        """
+        ships=self.get_ships()
+        wins, draws, losses = self.get_matchups(shipname)
+        matchups= wins.keys() | draws.keys() | losses.keys()
+        for ship in ships:
+            if ship not in matchups:
+                ships.remove(ship)
+        return ships
+
+
 
     def export_csv(self, filename):
         # Export the database to a CSV file
