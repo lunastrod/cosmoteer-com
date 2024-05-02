@@ -105,10 +105,8 @@ class FightDB:
         ships=self.get_ships()
         wins, draws, losses = self.get_matchups(shipname)
         matchups= wins.keys() | draws.keys() | losses.keys()
-        for ship in ships:
-            if ship in matchups:
-                ships.remove(ship)
-        return ships
+        unknown_matchups = [ship for ship in ships if ship not in matchups]
+        return unknown_matchups
 
 
 
