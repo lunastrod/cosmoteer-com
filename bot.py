@@ -384,7 +384,7 @@ async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipnam
         elif result==fight_db.FIGHT_RESULT.DRAW:
             winner_text="it is a draw"
         await interaction.response.send_message(f"In a fight between {shipname1} and {shipname2}, {winner_text}, according to {author_name}")
-    except ValueError as e:
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
     
@@ -396,7 +396,7 @@ async def db_add_ship(interaction: discord.Interaction, shipname: str):
     try:
         db.add_ship(shipname, author, author_name)
         await interaction.response.send_message(f"Ship {shipname} added to the database")
-    except ValueError as e:
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
     
@@ -408,7 +408,7 @@ async def db_remove_fight(interaction: discord.Interaction, shipname1: str, ship
     try:
         db.remove_fight(shipname1, shipname2, author)
         await interaction.response.send_message(f"Fight between {shipname1} and {shipname2} removed from the database")
-    except ValueError as e:
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
     
@@ -428,7 +428,7 @@ async def db_get_matchups(interaction: discord.Interaction, shipname: str):
             text_losses+=f"- **{ship}** : {', '.join(losses[ship])}\n"
         text=f"Matchups for **{shipname}**\n"+text_wins+"\n"+text_draws+"\n"+text_losses
         await interaction.response.send_message(text)
-    except ValueError as e:
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
@@ -450,7 +450,7 @@ async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, sh
             people_lose=[]
         text=f"In a fight between {shipname1} and {shipname2}, the results are:\n {len(people_win)} people think {shipname1} would win\n {len(people_draw)} people think it would be a draw\n {len(people_lose)} people think {shipname2} would win"
         await interaction.response.send_message(text)
-    except ValueError as e:
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
@@ -464,7 +464,7 @@ async def db_list_ships(interaction: discord.Interaction):
         for ship in ships:
             text+=f"- {ship}\n"
         await interaction.response.send_message(text)
-    except ValueError as e:
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
     
@@ -477,7 +477,7 @@ async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: st
         for ship in ships:
             text+=f"- {ship}\n"
         await interaction.response.send_message(text)
-    except ValueError as e:
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
