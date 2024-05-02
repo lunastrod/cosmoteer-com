@@ -16,8 +16,8 @@ from datetime import datetime as dt
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
-#db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
-db = fight_db.FightDB()
+db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
+#db = fight_db.FightDB()
 
 
 intents = discord.Intents.default()
