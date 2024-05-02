@@ -520,7 +520,7 @@ async def db_scoreboard(interaction: discord.Interaction):
         ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
         text="Scoreboard:\n"
         for ship in ships:
-            text+=f"- **{ship}** : {scoreboard[ship][0]} wins, {scoreboard[ship][1]} draws, {scoreboard[ship][2]} losses, {scoreboard[ship][3]} total\n"
+            text+=f"- **{ship}**: {scoreboard[ship][0]} {scoreboard[ship][0]/scoreboard[ship][3]}% wins, {scoreboard[ship][1]} {scoreboard[ship][1]/scoreboard[ship][3]}% draws, {scoreboard[ship][2]} {scoreboard[ship][2]/scoreboard[ship][3]}% losses, {scoreboard[ship][3]} total\n"
         await interaction.response.send_message(text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
