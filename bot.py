@@ -493,6 +493,20 @@ async def db_export_csv(interaction: discord.Interaction):
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
+    
+@tree.command(name="db_rename_ship", description='renames a ship in the database')
+async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str):
+    old_name=old_name.lower().strip()
+    new_name=new_name.lower().strip()
+    try:
+        author=str(interaction.user.id)
+        if author!="457210821773361152":
+            raise ValueError("Only LunastroD can rename ships!")
+        db.rename_ship(old_name, new_name)
+        await interaction.response.send_message(f"Ship {old_name} renamed to {new_name}")
+    except Exception as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
 
 #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)

@@ -146,6 +146,18 @@ class FightDB:
         self.cur.execute("SELECT DISTINCT shipname1 FROM Fights")
         return [row[0] for row in self.cur.fetchall()]
     
+    def rename_ship(self, old_name, new_name):
+        #check if the ship exists
+        if not self.ship_exists(old_name):
+            raise ValueError(f"Ship '{old_name}' does not exist in the database")
+        #check if the new name already exists
+        if self.ship_exists(new_name):
+            raise ValueError(f"Ship '{new_name}' already exists in the database")
+        # Rename the ship in the database
+        self.cur.execute("UPDATE Fights SET shipname1 = ? WHERE shipname1 = ?", (new_name, old_name))
+        self.cur.execute("UPDATE Fights SET shipname2 = ? WHERE shipname2 = ?", (new_name, old_name))
+        self.con.commit()
+    
     def close(self):
         self.con.close()
 
