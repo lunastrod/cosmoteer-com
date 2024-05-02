@@ -16,7 +16,9 @@ from datetime import datetime as dt
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
+#db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
 db = fight_db.FightDB()
+
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -355,7 +357,7 @@ async def rps(interaction: discord.Interaction, player_pick: str):
         await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
 
 @tree.command(name="db_add_fight", description='adds a new fight to the database')
-async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
+async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
     shipname1=shipname1.lower().strip()
     shipname2=shipname2.lower().strip()
     result=result.lower().strip()
@@ -387,7 +389,7 @@ async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str, 
         return
     
 @tree.command(name="db_add_ship", description='adds a new ship to the database')
-async def rps(interaction: discord.Interaction, shipname: str):
+async def db_add_ship(interaction: discord.Interaction, shipname: str):
     shipname=shipname.lower().strip()
     author=str(interaction.user.id)
     author_name=interaction.user.display_name
@@ -399,7 +401,7 @@ async def rps(interaction: discord.Interaction, shipname: str):
         return
     
 @tree.command(name="db_remove_fight", description='removes a fight from the database')
-async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str):
+async def db_remove_fight(interaction: discord.Interaction, shipname1: str, shipname2: str):
     shipname1=shipname1.lower().strip()
     shipname2=shipname2.lower().strip()
     author=str(interaction.user.id)
@@ -409,22 +411,30 @@ async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str):
     except ValueError as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-
-@tree.command(name="db_get_counters", description='gets the counters of a ship from the database')
-async def rps(interaction: discord.Interaction, shipname: str):
+    
+@tree.command(name="db_get_matchups", description='gets the matchups of a ship from the database')
+async def db_get_matchups(interaction: discord.Interaction, shipname: str):
     shipname=shipname.lower().strip()
     try:
-        counters=db.get_counters(shipname)
-        text="Counters for "+shipname+":\n"
-        for counter in counters:
-            text+=f"{counter} : {', '.join(counters[counter])}\n"
+        wins, draws, losses=db.get_matchups(shipname)
+        text_wins="Wins:\n"
+        for ship in wins:
+            text_wins+=f"- **{ship}** : {', '.join(wins[ship])}\n"
+        text_draws="Draws:\n"
+        for ship in draws:
+            text_draws+=f"- **{ship}** : {', '.join(draws[ship])}\n"
+        text_losses="Losses:\n"
+        for ship in losses:
+            text_losses+=f"- **{ship}** : {', '.join(losses[ship])}\n"
+        text=f"Matchups for **{shipname}**\n"+text_wins+"\n"+text_draws+"\n"+text_losses
         await interaction.response.send_message(text)
     except ValueError as e:
         await interaction.response.send_message(f"Error:{e}")
         return
+
     
 @tree.command(name="db_simulate_fight", description='simulates a fight between two ships')
-async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str):
+async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, shipname2: str):
     shipname1=shipname1.lower().strip()
     shipname2=shipname2.lower().strip()
     try:
@@ -445,14 +455,41 @@ async def rps(interaction: discord.Interaction, shipname1: str, shipname2: str):
         return
 
 @tree.command(name="db_list_ships", description='lists all ships in the database')
-async def rps(interaction: discord.Interaction):
+async def db_list_ships(interaction: discord.Interaction):
     try:
         ships=db.get_ships()
+        #sort the ships
+        ships.sort()
         text="Ships in the database:\n"
         for ship in ships:
             text+=f"- {ship}\n"
         await interaction.response.send_message(text)
     except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+    
+@tree.command(name="db_get_unknown_matchups", description='gets the unknown matchups of a ship from the database')
+async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: str):
+    shipname=shipname.lower().strip()
+    try:
+        ships=db.get_unknown_matchups(shipname)
+        text="Unknown matchups for "+shipname+":\n"
+        for ship in ships:
+            text+=f"- {ship}\n"
+        await interaction.response.send_message(text)
+    except ValueError as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+
+@tree.command(name="db_export_csv", description='exports the database to a csv file')
+async def db_export_csv(interaction: discord.Interaction):
+    try:
+        db.export_csv("fight_database.csv")
+        # Create a file object for the CSV file
+        csv_file = discord.File("fight_database.csv", filename="fight_database.csv")
+        # Send the CSV file to the user
+        await interaction.response.send_message("Database exported to CSV file", file=csv_file)
+    except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
