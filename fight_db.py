@@ -70,10 +70,11 @@ class FightDB:
         # Iterate over each fight data
         for ship1,ship2, author_name, result in fight_data:
             if result == FIGHT_RESULT.DRAW:
-                if ship1 in draws:
-                    draws[ship1].append(author_name)
+                opponent = ship1 if ship1 != ship_name else ship2
+                if opponent in draws:
+                    draws[opponent].append(author_name)
                 else:
-                    draws[ship1] = [author_name]
+                    draws[opponent] = [author_name]
             else:
                 # Check if the ship is shipname1 or shipname2, shipname1 is the ship that won
                 if ship1 == ship_name:
