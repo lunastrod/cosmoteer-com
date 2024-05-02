@@ -58,26 +58,62 @@ class FightDB:
         self.cur.execute("SELECT * FROM Fights")
         return self.cur.fetchall()
     
-    def get_counters(self, ship_name):
-        counters = {}
-        
+    def get_matchups(self, ship_name):
+        wins={}
+        draws={}
+        losses={}
         # Get all fights where the specified ship is involved
-        print(ship_name, FIGHT_RESULT.WIN)
         if not self.ship_exists(ship_name):
             raise ValueError(f"Ship '{ship_name}' does not exist in the database")
-
-        self.cur.execute("SELECT shipname1, author_name FROM Fights WHERE (shipname2 = ? AND result = ?)", (ship_name, FIGHT_RESULT.WIN))
+        self.cur.execute("SELECT shipname1, shipname2, author_name, result FROM Fights WHERE (shipname1 = ? OR shipname2 = ?)", (ship_name, ship_name))
         fight_data = self.cur.fetchall()
-        print(fight_data)
         # Iterate over each fight data
-        for ship1, author_name in fight_data:
-            if ship1 in counters:
-                counters[ship1].append(author_name)
+        for ship1,ship2, author_name, result in fight_data:
+            if result == FIGHT_RESULT.DRAW:
+                if ship1 in draws:
+                    draws[ship1].append(author_name)
+                else:
+                    draws[ship1] = [author_name]
             else:
-                counters[ship1] = [author_name]
-        return counters
+                # Check if the ship is shipname1 or shipname2, shipname1 is the ship that won
+                if ship1 == ship_name:
+                    if ship1 in wins:
+                        wins[ship2].append(author_name)
+                    else:
+                        wins[ship2] = [author_name]
+                else:
+                    if ship1 in losses:
+                        losses[ship1].append(author_name)
+                    else:
+                        losses[ship1] = [author_name]
+    
+        return wins, draws, losses
+    def get_unknown_matchups(self, shipname):
+        # Get all ships that the specified ship has not fought against
+        # check if the ship exists
+        if not self.ship_exists(shipname):
+            raise ValueError(f"Ship '{shipname}' does not exist in the database")
+        ships=self.get_ships()
+        for ship in ships:
+            self.cur.execute("SELECT * FROM Fights WHERE (shipname1 = ? AND shipname2 = ?) OR (shipname1 = ? AND shipname2 = ?)", (shipname, ship, ship, shipname))
+            if self.cur.fetchone():
+                ships.remove(ship)
+        return ships
+
+    def export_csv(self, filename):
+        # Export the database to a CSV file
+        self.cur.execute("SELECT shipname1, shipname2, result, author_name FROM Fights")
+        with open(filename, "w",encoding="utf-8") as f:
+            f.write("shipname1,shipname2,result,author_name\n")
+            for row in self.cur.fetchall():
+                f.write(",".join(map(str, row)) + "\n")
     
     def simulate_fight(self, shipname1, shipname2):
+        # check if the ships exist
+        if not self.ship_exists(shipname1):
+            raise ValueError(f"Ship '{shipname1}' does not exist in the database")
+        if not self.ship_exists(shipname2):
+            raise ValueError(f"Ship '{shipname2}' does not exist in the database")
         # Check if the fight is in the database
         result_authors = {}
         #search the winners
@@ -106,6 +142,4 @@ class FightDB:
 if(__name__=="__main__"):
     db = FightDB()
     print(db.get_fights())
-    #print(db.get_counters("ion rammer"))
-    print(db.get_counters("ion cruiser"))
     db.close()
