@@ -117,6 +117,13 @@ class FightDB:
             f.write("shipname1,shipname2,result,author_name\n")
             for row in self.cur.fetchall():
                 f.write(",".join(map(str, row)) + "\n")
+
+    def export_db(self, filename):
+        # copy the database to a new file
+        with open(filename, "wb") as f:
+            for line in self.con.iterdump():
+                f.write(bytes(line, "utf-8"))
+
     
     def simulate_fight(self, shipname1, shipname2):
         # check if the ships exist

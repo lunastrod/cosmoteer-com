@@ -494,6 +494,18 @@ async def db_export_csv(interaction: discord.Interaction):
         await interaction.response.send_message(f"Error:{e}")
         return
     
+@tree.command(name="db_export_db", description='exports the database to a db file')
+async def db_export_db(interaction: discord.Interaction):
+    try:
+        db.export_db("fight_database.db")
+        # Create a file object for the DB file
+        db_file = discord.File("fight_database.db", filename="fight_database.db")
+        # Send the DB file to the user
+        await interaction.response.send_message("Database exported to DB file", file=db_file)
+    except Exception as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+    
 @tree.command(name="db_rename_ship", description='renames a ship in the database')
 async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str):
     old_name=old_name.lower().strip()
@@ -520,7 +532,7 @@ async def db_scoreboard(interaction: discord.Interaction):
         ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
         table = "Scoreboard          |   Wins |  Draws | Losses |  Total |\n"
         for ship in ships:
-            table += f"**{ship:<20}** | {scoreboard[ship][0]:>6} | {scoreboard[ship][1]:>6} | {scoreboard[ship][2]:>6} | {scoreboard[ship][3]:>6} |\n"
+            table += f"**{ship.ljust(20)}** | {str(scoreboard[ship][0]).rjust(8)} | {str(scoreboard[ship][1]).rjust(8)} | {str(scoreboard[ship][2]).rjust(8)} | {str(scoreboard[ship][3]).rjust(8)} |\n"
         await interaction.response.send_message(table)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
