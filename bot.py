@@ -518,10 +518,12 @@ async def db_scoreboard(interaction: discord.Interaction):
             scoreboard[s]=[len(wins), len(draws), len(losses), len(wins)+len(draws)+len(losses)]
         #sort the ships by number of wins
         ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
-        text="Scoreboard:\n"
+        table = "Scoreboard          |   Wins |  Draws | Losses |  Total |\n"
         for ship in ships:
-            text+=f"- **{ship}**: {scoreboard[ship][0]} {round(100*scoreboard[ship][0]/scoreboard[ship][3])}% win {scoreboard[ship][1]} {round(100*scoreboard[ship][1]/scoreboard[ship][3])}% draw {scoreboard[ship][2]} {round(100*scoreboard[ship][2]/scoreboard[ship][3])}% loss {scoreboard[ship][3]} total\n"
-        await interaction.response.send_message(text)
+            table += f"{ship:<20} | {scoreboard[ship][0]:>6} | {scoreboard[ship][1]:>6} | {scoreboard[ship][2]:>6} | {scoreboard[ship][3]:>6} |\n"
+        embed = discord.Embed(title="Price analysis",color=discord.Color.green())
+        embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
+        await interaction.response.send_message(embed=embed)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
