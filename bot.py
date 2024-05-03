@@ -11,22 +11,25 @@ from io import BytesIO
 import requests
 import json
 import random
+import traceback
 
 from datetime import datetime as dt
 
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD = os.getenv("DISCORD_GUILD")
+#load_dotenv()
 
-API_URL = "https://cosmo-api-six.vercel.app/analyze"
-API_URL2 = "https://api.cosmoship.duckdns.org/analyze"
+API_URL = "https://cosmo-api-six.vercel.app/"
+API_NEW = "https://api.cosmoship.duckdns.org/"
+
+db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
+#db = fight_db.FightDB()
+
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 short_version_text="Made by LunastroD, Aug 2023 - Sep 2023"
-version_text=short_version_text+", for the Excelsior discord server and the Cosmoteer community :3\n- Check out the source code at <https://github.com/lunastrod/cosmoteer-com>"
+version_text=short_version_text+", for the Excelsior discord server and the Cosmoteer community :3\n- Check out the source code at <https://github.com/lunastrod/cosmoteer-com>\n- Thanks to Poney, Coconut Trebuchet and jun(0) for their help"
 help_text=version_text+"""
 /ping: responds with the bot's latency
 
@@ -105,25 +108,20 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         }
         json_data = json.dumps({'image': base64_string, 'args': args})
         # Send the request to the server
-        data_returned=""
+        print(dt.now(),"requesting data")
+        # try API_NEW and if it fails, try API_URL
         try:
-            url = API_URL2
-            print(dt.now(),"requesting data")
+            url = API_NEW + "analyze"
             response = requests.post(url, json=json_data)
             response.raise_for_status()
-            print(dt.now(),"server responded")
-            # Get the response
-            data_returned = response.json()
-        except:
-            print("retrying with alternative url")
-            url = API_URL
-            print(dt.now(),"requesting data")
+        except requests.exceptions.HTTPError:
+            url = API_URL + "analyze"
             response = requests.post(url, json=json_data)
             response.raise_for_status()
-            print(dt.now(),"server responded")
-            # Get the response
-            data_returned = response.json()
-        
+        print(dt.now(),"server responded")
+        # Get the response
+        data_returned = response.json()
+
         # Get the URL of the center of mass image
         url_com = data_returned['url_com']
         # prepare the data
@@ -216,13 +214,16 @@ async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scal
     print(dt.now(),"received command")
     await interaction.response.defer()
     print(dt.now(),"deferred")
-    data_returned=""
-
-    url = 'https://cosmo-api-six.vercel.app/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
-    #url = 'https://api.cosmoship.duckdns.org/compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
     print(dt.now(),"requesting data")
-    response = requests.get(url)
-    response.raise_for_status()
+    # try API_NEW and if it fails, try API_URL
+    try:
+        url = API_NEW + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError:
+        url = API_URL + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
+        response = requests.get(url)
+        response.raise_for_status()
     print(dt.now(),"server responded")
     # Get the response
     data_returned = response.json()
@@ -330,7 +331,7 @@ async def help(interaction: discord.Interaction):
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
     print(dt.now(),"help command sent")
 
-@tree.command(name="elim_ship_rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
+@tree.command(name="elim ship rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
 async def rps(player_pick):
     ships={"cannon wall":{"wins":["avoider"]},
            "avoider"    :{"wins":["dc spinner"]},
@@ -341,11 +342,10 @@ async def rps(player_pick):
     computer_pick = random.choice(list(ships.keys()))
 
     if(player_pick not in ships):
-        print("You need to pick between "+', '.join(list(ships.keys())))
+        await interaction.response.send_message(f"Error:{player_pick} You need to pick between "+', '.join(list(ships.keys())))
         return
     player_win=False
     computer_win=False
-    print(player_pick,computer_pick)
     if(computer_pick in ships[player_pick]["wins"]):
         player_win=True
     elif(player_pick in ships[computer_pick]["wins"]):
@@ -353,14 +353,31 @@ async def rps(player_pick):
 
 
     if player_win == True: # Display results to user
-        print(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; player wins!")
+        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; {interaction.user.display_name} wins!")
     elif computer_win:
-        print(f"player picked {player_pick} and Cosmoteer Design Tools picked {computer_pick}; Cosmoteer Design Tools wins!")
+        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; Cosmoteer Design Tools wins!")
+    else:
+        await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
+
+@tree.command(name="db_add_fight", description='adds a new fight to the database')
+async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
+    shipname1=shipname1.lower().strip()
+    shipname2=shipname2.lower().strip()
+    result=result.lower().strip()
+    if result=="win" or result=="w":
+        result=fight_db.FIGHT_RESULT.WIN
+    elif result=="lose" or result=="l":
+        result=fight_db.FIGHT_RESULT.WIN
+        temp=shipname1
+        shipname1=shipname2
+        shipname2=temp
+    elif result=="draw" or result=="d":
+        result=fight_db.FIGHT_RESULT.DRAW
     else:
         print(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
 
 
-# rps("dc spinner         ")
+rps("dc spinner         ")
 
 #client.run(os.getenv("DISCORDBOTAPI"))
-client.run(TOKEN)
+client.run(secret_token.token)

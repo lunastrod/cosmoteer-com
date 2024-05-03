@@ -1,6 +1,8 @@
 #  Bot related files
 secret_token.py
 discord_bot/
+*.db
+*.csv
 
 # output from the tool
 out.png
