@@ -320,13 +320,14 @@ async def help(interaction: discord.Interaction):
     """
     print(dt.now(),"help command received")
     # Defer the initial response to prevent timeouts
-    await interaction.response.defer()
-    
-    # Generate the legend image for the command
-    #center_of_mass.draw_legend("legend.png")
-    
-    # Send the help text along with the legend image as a file
-    await interaction.followup.send(help_text, file=discord.File("legend.png"))
+    try:
+        await interaction.response.defer()
+        
+        # Send the help text along with the legend image as a file
+        await interaction.followup.send(help_text, file=discord.File("legend.png"))
+    except Exception as e:
+        print(dt.now(),"Error:",e)
+        return "Error: could not send help"
     print(dt.now(),"help command sent")
 
 @tree.command(name="elim_rps", description='play rock-paper-scissors, but with elimination archtypes!')
