@@ -21,6 +21,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
+# UNCOMMENT EACH OF THE DB COMMANDS BEFORE SUBMITTING PULL REQUEST
 # db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
 #db = fight_db.FightDB()
 
@@ -498,6 +499,18 @@ async def rps(interaction: discord.Interaction, player_pick: str):
 #         await interaction.response.send_message(f"Error:{e}")
 #         return
     
+# @tree.command(name="db_export_db", description='exports the database to a db file')
+# async def db_export_db(interaction: discord.Interaction):
+#     try:
+#         db.export_db("fight_database.db")
+#         # Create a file object for the DB file
+#         db_file = discord.File("fight_database.db", filename="fight_database.db")
+#         # Send the DB file to the user
+#         await interaction.response.send_message("Database exported to DB file", file=db_file)
+#     except Exception as e:
+#         await interaction.response.send_message(f"Error:{e}")
+#         return
+    
 # @tree.command(name="db_rename_ship", description='renames a ship in the database')
 # async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str):
 #     old_name=old_name.lower().strip()
@@ -522,10 +535,10 @@ async def rps(interaction: discord.Interaction, player_pick: str):
 #             scoreboard[s]=[len(wins), len(draws), len(losses), len(wins)+len(draws)+len(losses)]
 #         #sort the ships by number of wins
 #         ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
-#         text="Scoreboard:\n"
+#         table = "Scoreboard               |Wins  |Draws |Losses|Total\n"
 #         for ship in ships:
-#             text+=f"- **{ship}**: {scoreboard[ship][0]} {round(100*scoreboard[ship][0]/scoreboard[ship][3])}% win {scoreboard[ship][1]} {round(100*scoreboard[ship][1]/scoreboard[ship][3])}% draw {scoreboard[ship][2]} {round(100*scoreboard[ship][2]/scoreboard[ship][3])}% loss {scoreboard[ship][3]} total\n"
-#         await interaction.response.send_message(text)
+#             table += f"{ship.ljust(25)}|{str(scoreboard[ship][0]).ljust(6)}|{str(scoreboard[ship][1]).ljust(6)}|{str(scoreboard[ship][2]).ljust(6)}|{str(scoreboard[ship][3])}\n"
+#         await interaction.response.send_message(f"```{table}```")
 #     except Exception as e:
 #         await interaction.response.send_message(f"Error:{e}")
 #         return
