@@ -15,13 +15,15 @@ import traceback
 
 from datetime import datetime as dt
 
-#load_dotenv()
+load_dotenv()
+
+TOKEN = os.getenv('DISCORD_TOKEN')
 
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
-db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
-#db = fight_db.FightDB()
+# db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
+# #db = fight_db.FightDB()
 
 
 intents = discord.Intents.default()
@@ -331,53 +333,53 @@ async def help(interaction: discord.Interaction):
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
     print(dt.now(),"help command sent")
 
-@tree.command(name="elim ship rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
-async def rps(player_pick):
-    ships={"cannon wall":{"wins":["avoider"]},
-           "avoider"    :{"wins":["dc spinner"]},
-           "dc spinner" :{"wins":["cannon wall"]}
-    }
+# @tree.command(name="elim_ship_rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
+# async def rps(interaction: discord.Interaction, player_pick):
+#     ships={"cannon wall":{"wins":["avoider"]},
+#            "avoider"    :{"wins":["dc spinner"]},
+#            "dc spinner" :{"wins":["cannon wall"]}
+#     }
 
-    player_pick=player_pick.lower().strip()
-    computer_pick = random.choice(list(ships.keys()))
+#     player_pick=player_pick.lower().strip()
+#     computer_pick = random.choice(list(ships.keys()))
 
-    if(player_pick not in ships):
-        await interaction.response.send_message(f"Error:{player_pick} You need to pick between "+', '.join(list(ships.keys())))
-        return
-    player_win=False
-    computer_win=False
-    if(computer_pick in ships[player_pick]["wins"]):
-        player_win=True
-    elif(player_pick in ships[computer_pick]["wins"]):
-        computer_win=True
-
-
-    if player_win == True: # Display results to user
-        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; {interaction.user.display_name} wins!")
-    elif computer_win:
-        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; Cosmoteer Design Tools wins!")
-    else:
-        await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
-
-@tree.command(name="db_add_fight", description='adds a new fight to the database')
-async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
-    shipname1=shipname1.lower().strip()
-    shipname2=shipname2.lower().strip()
-    result=result.lower().strip()
-    if result=="win" or result=="w":
-        result=fight_db.FIGHT_RESULT.WIN
-    elif result=="lose" or result=="l":
-        result=fight_db.FIGHT_RESULT.WIN
-        temp=shipname1
-        shipname1=shipname2
-        shipname2=temp
-    elif result=="draw" or result=="d":
-        result=fight_db.FIGHT_RESULT.DRAW
-    else:
-        print(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
+#     if(player_pick not in ships):
+#         await interaction.response.send_message(f"Error:{player_pick} You need to pick between "+', '.join(list(ships.keys())))
+#         return
+#     player_win=False
+#     computer_win=False
+#     if(computer_pick in ships[player_pick]["wins"]):
+#         player_win=True
+#     elif(player_pick in ships[computer_pick]["wins"]):
+#         computer_win=True
 
 
-rps("dc spinner         ")
+#     if player_win == True: # Display results to user
+#         await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; {interaction.user.display_name} wins!")
+#     elif computer_win:
+#         await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; Cosmoteer Design Tools wins!")
+#     else:
+#         await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
+
+# @tree.command(name="db_add_fight", description='adds a new fight to the database')
+# async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
+#     shipname1=shipname1.lower().strip()
+#     shipname2=shipname2.lower().strip()
+#     result=result.lower().strip()
+#     if result=="win" or result=="w":
+#         result=fight_db.FIGHT_RESULT.WIN
+#     elif result=="lose" or result=="l":
+#         result=fight_db.FIGHT_RESULT.WIN
+#         temp=shipname1
+#         shipname1=shipname2
+#         shipname2=temp
+#     elif result=="draw" or result=="d":
+#         result=fight_db.FIGHT_RESULT.DRAW
+#     else:
+#         print(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
+
+
+# rps("dc spinner         ")
 
 #client.run(os.getenv("DISCORDBOTAPI"))
-client.run(secret_token.token)
+client.run(TOKEN)
