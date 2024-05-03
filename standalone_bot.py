@@ -31,6 +31,34 @@ help_text="""/version: """+version_text+"""
 
 - If you notice any mistakes on things like the total mass or the speed, ping LunastroD"""
 
+db_help_text = f"""/version: """+version_text+"""
+
+The Cosmoteer Design Tools bot has a database of every known multiplayer elimination archetype and their matchups that can be contributed to by anybody.
+Below is a list of commands that are used to access and contribute to the database.
+
+/help: Shows this message
+
+/db_list_ships: Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
+
+/db_add_ships: Adds a new ship to the database.
+
+/db_rename_ship: Changes the existing name of a ship to a different specified one.
+
+/db_scoreboard: Shows the win/loss/draw ratio for each ship in the database based on matchups.
+
+/db_get_matchups: Lists each matchup (win, loss, draw) of a specified ship from the database.
+
+/db_get_unknown_matchups: Lists each matchup that has no votes from a specified ship from the database.
+
+/db_add_fight: Add a new matchup between 2 specified ship in the database.
+
+/db_remove_fight: Removes a matchup between 2 specified ship in the database.
+
+/db_simulate_fight: Simulates a fight between 2 specified ship, based on the listed matchup in the database.
+
+/db_export_csv: Exports the entire database to a .csv file.
+"""
+
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game(name="Cosmoteer (/help)"))
@@ -82,9 +110,12 @@ async def version(interaction: discord.Interaction):
     await interaction.response.send_message(version_text)
 
 @tree.command(name="help", description="shows the list of commands")
-async def help(interaction: discord.Interaction):
-    await interaction.response.defer()
-    center_of_mass.draw_legend("legend.png")
-    await interaction.followup.send(help_text,file=discord.File("legend.png"))
+async def help(interaction: discord.Interaction, list_database_commands: bool = False):
+    if not list_database_commands == True:
+        await interaction.response.defer()
+        center_of_mass.draw_legend("legend.png")
+        await interaction.followup.send(help_text,file=discord.File("legend.png"))
+    else:
+        await interaction.response.send_message(db_help_text)
 
 client.run(secret_token.token)

@@ -1,9 +1,9 @@
-import discord
+import discord #TODO: generate new key lmao
 from discord import app_commands
 import secret_token
 
-#from dotenv import load_dotenv
-#import os
+from dotenv import load_dotenv
+import os
 #import center_of_mass
 
 import base64
@@ -14,7 +14,9 @@ import random
 
 from datetime import datetime as dt
 
-#load_dotenv()
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
+GUILD = os.getenv("DISCORD_GUILD")
 
 API_URL = "https://cosmo-api-six.vercel.app/analyze"
 API_URL2 = "https://api.cosmoship.duckdns.org/analyze"
@@ -66,7 +68,6 @@ async def on_ready():
     
     # Print a message indicating that the bot is ready
     print(dt.now(),"Bot is ready")
-
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
 async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False):
@@ -329,7 +330,7 @@ async def help(interaction: discord.Interaction):
     await interaction.followup.send(help_text, file=discord.File("legend.png"))
     print(dt.now(),"help command sent")
 
-@tree.command(name="elim ship rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
+@tree.command(name="elim_ship_rock-paper-scissors", description='play rock-paper-scissors, but with elimination archtypes!')
 async def rps(player_pick):
     ships={"cannon wall":{"wins":["avoider"]},
            "avoider"    :{"wins":["dc spinner"]},
@@ -359,7 +360,7 @@ async def rps(player_pick):
         print(f"Both player and Cosmoteer Design Tools picked {player_pick}; it is a draw!")
 
 
-rps("dc spinner         ")
+# rps("dc spinner         ")
 
 #client.run(os.getenv("DISCORDBOTAPI"))
-client.run(secret_token.token)
+client.run(TOKEN)
