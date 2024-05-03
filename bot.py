@@ -17,7 +17,8 @@ from datetime import datetime as dt
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
-db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
+BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
+db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 #db = fight_db.FightDB()
 
 
@@ -324,7 +325,7 @@ async def help(interaction: discord.Interaction):
         await interaction.response.defer()
         
         # Send the help text along with the legend image as a file
-        await interaction.followup.send(help_text, file=discord.File("legend.png"))
+        await interaction.followup.send(help_text, file=discord.File(BOT_PATH+"legend.png"))
     except Exception as e:
         print(dt.now(),"Error:",e)
         return "Error: could not send help"
