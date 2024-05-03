@@ -328,7 +328,7 @@ async def help(interaction: discord.Interaction):
         await interaction.followup.send(help_text, file=discord.File(BOT_PATH+"legend.png"))
     except Exception as e:
         print(dt.now(),"Error:",e)
-        return "Error: could not send help"
+        await interaction.followup.send("Error:"+str(e))
     print(dt.now(),"help command sent")
 
 @tree.command(name="elim_rps", description='play rock-paper-scissors, but with elimination archtypes!')
