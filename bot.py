@@ -533,7 +533,7 @@ async def db_scoreboard(interaction: discord.Interaction):
         table = "Scoreboard          |Wins  |Draws |Losses|Total\n"
         for ship in ships:
             table += f"**{ship.ljust(20)}**|{str(scoreboard[ship][0]).ljust(6)}|{str(scoreboard[ship][1]).ljust(6)}|{str(scoreboard[ship][2]).ljust(6)}|{str(scoreboard[ship][3])}\n"
-        await interaction.response.send_message(table)
+        await interaction.response.send_message(f"```{table}```")
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
