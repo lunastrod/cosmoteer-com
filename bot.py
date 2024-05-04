@@ -337,7 +337,7 @@ async def ping(interaction: discord.Interaction):
         await interaction.response.send_message("hmmm")
 
 @tree.command(name="help", description="shows the list of commands")
-async def help(interaction: discord.Interaction, show_db_commands: bool = True):
+async def help(interaction: discord.Interaction, show_db_commands: bool = False):
     """
     Responds to a help command and sends a list of commands.
 
