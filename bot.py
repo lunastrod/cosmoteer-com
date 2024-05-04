@@ -19,7 +19,7 @@ API_NEW = "https://api.cosmoship.duckdns.org/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
-db = fight_db.FightDB()
+#db = fight_db.FightDB()
 
 
 intents = discord.Intents.default()
