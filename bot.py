@@ -29,7 +29,7 @@ BOT_PATH = "/Users/nirav/Documents/GitHub/cosmoteer-com" # for the love of god p
 # #db = fight_db.FightDB()
 
 # BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
+# db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 #db = fight_db.FightDB()
 
 
@@ -570,23 +570,23 @@ async def rps(interaction: discord.Interaction, player_pick: str):
 #         await interaction.response.send_message(f"Error:{e}")
 #         return
     
-@tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
-async def db_scoreboard(interaction: discord.Interaction):
-    try:
-        ships=db.get_ships()
-        scoreboard={}
-        for s in ships:
-            wins, draws, losses=db.get_matchups(s)
-            scoreboard[s]=[len(wins), len(draws), len(losses), len(wins)+len(draws)+len(losses)]
-        #sort the ships by number of wins
-        ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
-        table = "Scoreboard             |Win|Draw|Lost|Total\n"
-        for ship in ships:
-            table += f"{ship.ljust(23)}|{str(scoreboard[ship][0]).ljust(3)}|{str(scoreboard[ship][1]).ljust(4)}|{str(scoreboard[ship][2]).ljust(4)}|{str(scoreboard[ship][3])}\n"
-        await interaction.response.send_message(f"```{table}```")
-    except Exception as e:
-        await interaction.response.send_message(f"Error:{e}")
-        return
+# @tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
+# async def db_scoreboard(interaction: discord.Interaction):
+#     try:
+#         ships=db.get_ships()
+#         scoreboard={}
+#         for s in ships:
+#             wins, draws, losses=db.get_matchups(s)
+#             scoreboard[s]=[len(wins), len(draws), len(losses), len(wins)+len(draws)+len(losses)]
+#         #sort the ships by number of wins
+#         ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
+#         table = "Scoreboard             |Win|Draw|Lost|Total\n"
+#         for ship in ships:
+#             table += f"{ship.ljust(23)}|{str(scoreboard[ship][0]).ljust(3)}|{str(scoreboard[ship][1]).ljust(4)}|{str(scoreboard[ship][2]).ljust(4)}|{str(scoreboard[ship][3])}\n"
+#         await interaction.response.send_message(f"```{table}```")
+#     except Exception as e:
+#         await interaction.response.send_message(f"Error:{e}")
+#         return
 
 # #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(TOKEN) # secret_token.token
