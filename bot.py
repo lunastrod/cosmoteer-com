@@ -24,7 +24,7 @@ API_NEW = "https://api.cosmoship.duckdns.org/"
 # UNCOMMENT EACH OF THE DB COMMANDS BEFORE SUBMITTING PULL REQUEST
 
 # BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-BOT_PATH = "/Users/nirav/Documents/GitHub/cosmoteer-com" # for the love of god please remove this one especially
+BOT_PATH = "/Users/nirav/Documents/GitHub/cosmoteer-com/" # for the love of god please remove this one especially
 # db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 # #db = fight_db.FightDB()
 
@@ -60,32 +60,32 @@ the bot considers the lateral thrust of each thruster
 the bot doesn't work with modded parts
 """
 
-db_help_text = f"""/version: """+version_text+"""
+db_help_text = f""+version_text+"""
 
 The Cosmoteer Design Tools bot has a database of every known multiplayer elimination archetype and their matchups that can be contributed to by anybody.
 Below is a list of commands that are used to access and contribute to the database.
 
-/help: Shows this message
+**/help:** Shows this message
 
-/db_list_ships: Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
+**/db_list_ships:** Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
 
-/db_add_ships: Adds a new ship to the database.
+**/db_add_ships:** Adds a new ship to the database.
 
-/db_rename_ship: Changes the existing name of a ship to a different specified one.
+**/db_rename_ship:** Changes the existing name of a ship to a different specified one. Only LunastroD can use this command.
 
-/db_scoreboard: Shows the win/loss/draw ratio for each ship in the database based on matchups.
+**/db_scoreboard:** Shows the win/loss/draw ratio for each ship in the database based on matchups.
 
-/db_get_matchups: Lists each matchup (win, loss, draw) of a specified ship from the database.
+**/db_get_matchups:** Lists each matchup (win, loss, draw) of a specified ship from the database.
 
-/db_get_unknown_matchups: Lists each matchup that has no votes from a specified ship from the database.
+**/db_get_unknown_matchups:** Lists each matchup that has no votes from a specified ship from the database.
 
-/db_add_fight: Add a new matchup between 2 specified ship in the database.
+**/db_add_fight:** Add a new matchup between 2 specified ship in the database.
 
-/db_remove_fight: Removes a matchup between 2 specified ship in the database.
+**/db_remove_fight:** Removes a matchup between 2 specified ship in the database.
 
-/db_simulate_fight: Simulates a fight between 2 specified ship, based on the listed matchup in the database.
+**/db_simulate_fight:** Simulates a fight between 2 specified ship, based on the listed matchup in the database.
 
-/db_export_csv: Exports the entire database to a .csv file.
+**/db_export_csv:** Exports the entire database to a .csv file.
 """
 
 @client.event
@@ -349,7 +349,7 @@ async def ping(interaction: discord.Interaction):
         await interaction.response.send_message("hmmm")
 
 @tree.command(name="help", description="shows the list of commands")
-async def help(interaction: discord.Interaction):
+async def help(interaction: discord.Interaction, show_db_commands: bool = True):
     """
     Responds to a help command and sends a list of commands.
 
@@ -359,25 +359,19 @@ async def help(interaction: discord.Interaction):
     Returns:
         None
     """
-    print(dt.now(),"help command received")
-    # Defer the initial response to prevent timeouts
-    try:
-        await interaction.response.defer()
-        
-        # Send the help text along with the legend image as a file
-        await interaction.followup.send(help_text, file=discord.File(BOT_PATH+"legend.png"))
-    except Exception as e:
-        print(dt.now(),"Error:",e)
-        await interaction.followup.send("Error:"+str(e))
-    try:
-        await interaction.response.defer()
-        
-        # Send the help text along with the legend image as a file
-        await interaction.followup.send(help_text, file=discord.File(BOT_PATH+"legend.png"))
-    except Exception as e:
-        print(dt.now(),"Error:",e)
-        await interaction.followup.send("Error:"+str(e))
-    print(dt.now(),"help command sent")
+    if show_db_commands == False:
+        print(dt.now(),"help command received")
+        # Defer the initial response to prevent timeouts
+        try:
+            await interaction.response.defer()
+            
+            # Send the help text along with the legend image as a file
+            await interaction.followup.send(help_text, file=discord.File(BOT_PATH+"legend.png"))
+        except Exception as e:
+            print(dt.now(),"Error:",e)
+            await interaction.followup.send("Error:"+str(e))
+    else:
+            await interaction.response.send_message(db_help_text)
 
 @tree.command(name="elim_rps", description='play rock-paper-scissors, but with elimination archtypes!')
 async def rps(interaction: discord.Interaction, player_pick: str):
