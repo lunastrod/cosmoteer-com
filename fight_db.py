@@ -18,22 +18,22 @@ class FightDB:
                                 result INTEGER NOT NULL
                             );""")
         self.con.commit()
-    
+
     def insert_fight(self, shipname1, shipname2, author, author_name, result):
         # Check if shipname1 and shipname2 exist in the database
         if not self.ship_exists(shipname1):
             raise ValueError(f"Ship '{shipname1}' does not exist in the database")
         if not self.ship_exists(shipname2):
             raise ValueError(f"Ship '{shipname2}' does not exist in the database")
-        
-        self.cur.execute("SELECT id FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND author = ?) OR (shipname1 = ? AND shipname2 = ? AND author = ?)", 
+
+        self.cur.execute("SELECT id FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND author = ?) OR (shipname1 = ? AND shipname2 = ? AND author = ?)",
                          (shipname1, shipname2, author, shipname2, shipname1, author))
         existing_fight = self.cur.fetchone()
-        
+
         if existing_fight:# Remove the existing fight
             print("Removing existing fight")
             self.cur.execute("DELETE FROM Fights WHERE id = ?", (existing_fight[0],))
-        
+
         # Insert the new fight
         self.cur.execute("INSERT INTO Fights (shipname1, shipname2, author, author_name, result) VALUES (?, ?, ?, ?, ?)", (shipname1, shipname2, author, author_name, result))
         self.con.commit()
@@ -44,21 +44,21 @@ class FightDB:
 
     def remove_fight(self, shipname1, shipname2, author):
         # Remove the fight between shipname1 and shipname2 with the specified author
-        self.cur.execute("DELETE FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND author = ?) OR (shipname1 = ? AND shipname2 = ? AND author = ?)", 
+        self.cur.execute("DELETE FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND author = ?) OR (shipname1 = ? AND shipname2 = ? AND author = ?)",
                          (shipname1, shipname2, author, shipname2, shipname1, author))
         self.con.commit()
-    
+
     def add_ship(self, shipname, author, author_name):
         # Add a fight where the ship fights against itself
         if not self.ship_exists(shipname):
             self.cur.execute("INSERT INTO Fights (shipname1, shipname2, author, author_name, result) VALUES (?, ?, ?, ?, ?)", (shipname, shipname, author, author_name, FIGHT_RESULT.DRAW))
             self.con.commit()
-    
+
     def get_fights(self):
         self.cur.execute("SELECT * FROM Fights")
         return self.cur.fetchall()
-    
-    def get_matchups(self, ship_name):
+
+    def get_matchups(self, ship_name, player_name=None):
         wins={}
         draws={}
         losses={}
@@ -69,27 +69,28 @@ class FightDB:
         fight_data = self.cur.fetchall()
         # Iterate over each fight data
         for ship1,ship2, author_name, result in fight_data:
-            if result == FIGHT_RESULT.DRAW:
-                opponent = ship1 if ship1 != ship_name else ship2
-                if opponent in draws:
-                    draws[opponent].append(author_name)
-                else:
-                    draws[opponent] = [author_name]
-            else:
-                # Check if the ship is shipname1 or shipname2, shipname1 is the ship that won
-                if ship1 == ship_name:
-                    if ship2 in wins:
-                        wins[ship2].append(author_name)
+            if player_name is None or author_name == player_name:
+                if result == FIGHT_RESULT.DRAW:
+                    opponent = ship1 if ship1 != ship_name else ship2
+                    if opponent in draws:
+                        draws[opponent].append(author_name)
                     else:
-                        wins[ship2] = [author_name]
+                        draws[opponent] = [author_name]
                 else:
-                    if ship1 in losses:
-                        losses[ship1].append(author_name)
+                    # Check if the ship is shipname1 or shipname2, shipname1 is the ship that won
+                    if ship1 == ship_name:
+                        if ship2 in wins:
+                            wins[ship2].append(author_name)
+                        else:
+                            wins[ship2] = [author_name]
                     else:
-                        losses[ship1] = [author_name]
-    
+                        if ship1 in losses:
+                            losses[ship1].append(author_name)
+                        else:
+                            losses[ship1] = [author_name]
+
         return wins, draws, losses
-    def get_unknown_matchups(self, shipname):
+    def get_unknown_matchups(self, shipname, player_name=None):
         """
         # Get all ships that the specified ship has not fought against
         # check if the ship exists
@@ -103,7 +104,7 @@ class FightDB:
         return ships
         """
         ships=self.get_ships()
-        wins, draws, losses = self.get_matchups(shipname)
+        wins, draws, losses = self.get_matchups(shipname, player_name)
         matchups= wins.keys() | draws.keys() | losses.keys()
         unknown_matchups = [ship for ship in ships if ship not in matchups]
         return unknown_matchups
@@ -124,7 +125,7 @@ class FightDB:
             for line in self.con.iterdump():
                 f.write(bytes(line, "utf-8"))
 
-    
+
     def simulate_fight(self, shipname1, shipname2):
         # check if the ships exist
         if not self.ship_exists(shipname1):
@@ -152,7 +153,7 @@ class FightDB:
     def get_ships(self):
         self.cur.execute("SELECT DISTINCT shipname1 FROM Fights")
         return [row[0] for row in self.cur.fetchall()]
-    
+
     def rename_ship(self, old_name, new_name):
         #check if the ship exists
         if not self.ship_exists(old_name):
@@ -164,7 +165,7 @@ class FightDB:
         self.cur.execute("UPDATE Fights SET shipname1 = ? WHERE shipname1 = ?", (new_name, old_name))
         self.cur.execute("UPDATE Fights SET shipname2 = ? WHERE shipname2 = ?", (new_name, old_name))
         self.con.commit()
-    
+
     def close(self):
         self.con.close()
 
