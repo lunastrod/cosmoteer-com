@@ -17,7 +17,7 @@ from datetime import datetime as dt
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
-BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
+BOT_PATH = secret_token.path#"/home/astrod/Desktop/Bots/cosmoteer-com/"
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 #db = fight_db.FightDB()
 
@@ -63,9 +63,9 @@ Below is a list of commands that are used to access and contribute to the databa
 
 **/db_scoreboard:** Shows the win/loss/draw ratio for each ship in the database based on matchups.
 
-**/db_get_matchups:** Lists each matchup (win, loss, draw) of a specified ship from the database.
+**/db_get_matchups:** Lists each matchup (win, loss, draw) of a specified ship from the database. The optional "playername" parameter can be used to only show the matchups a certain player submitted. 
 
-**/db_get_unknown_matchups:** Lists each matchup that has no votes from a specified ship from the database.
+**/db_get_unknown_matchups:** Lists each matchup that has no votes from a specified ship from the database. The optional "playername" parameter can be used to only show the unknown matchups for a certain player.
 
 **/db_add_fight:** Add a new matchup between 2 specified ship in the database.
 
@@ -446,10 +446,10 @@ async def db_remove_fight(interaction: discord.Interaction, shipname1: str, ship
         return
     
 @tree.command(name="db_get_matchups", description='gets the matchups of a ship from the database')
-async def db_get_matchups(interaction: discord.Interaction, shipname: str):
+async def db_get_matchups(interaction: discord.Interaction, shipname: str, playername: str=None):
     shipname=shipname.lower().strip()
     try:
-        wins, draws, losses=db.get_matchups(shipname)
+        wins, draws, losses=db.get_matchups(shipname, playername)
         text_wins="Wins:\n"
         for ship in wins:
             text_wins+=f"- **{ship}** : {', '.join(wins[ship])}\n"
@@ -502,10 +502,10 @@ async def db_list_ships(interaction: discord.Interaction):
         return
     
 @tree.command(name="db_get_unknown_matchups", description='gets the unknown matchups of a ship from the database')
-async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: str):
+async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: str, player_name: str=None):
     shipname=shipname.lower().strip()
     try:
-        ships=db.get_unknown_matchups(shipname)
+        ships=db.get_unknown_matchups(shipname, player_name)
         text="Unknown matchups for "+shipname+":\n"
         for ship in ships:
             text+=f"- {ship}\n"
