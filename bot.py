@@ -18,6 +18,7 @@ API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
+BOT_PATH = ""
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 #db = fight_db.FightDB()
 
@@ -545,7 +546,7 @@ async def db_export_csv(interaction: discord.Interaction):
     try:
         db.export_csv("fight_database.csv")
         # Create a file object for the CSV file
-        csv_file = discord.File("fight_database.csv", filename="fight_database.csv")
+        csv_file = discord.File(BOT_PATH+"fight_database.csv", filename="fight_database.csv")
         # Send the CSV file to the user
         await interaction.response.send_message("Database exported to CSV file", file=csv_file)
     except Exception as e:
