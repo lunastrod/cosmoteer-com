@@ -546,7 +546,7 @@ async def db_export_csv(interaction: discord.Interaction):
     try:
         db.export_csv("fight_database.csv")
         # Create a file object for the CSV file
-        csv_file = discord.File(BOT_PATH+"fight_database.csv", filename="fight_database.csv")
+        csv_file = discord.File("fight_database.csv", filename="fight_database.csv")
         # Send the CSV file to the user
         await interaction.response.send_message("Database exported to CSV file", file=csv_file)
     except Exception as e:
@@ -558,7 +558,7 @@ async def db_export_db(interaction: discord.Interaction):
     try:
         #db.export_db("fight_database.db")
         # Create a file object for the DB file
-        db_file = discord.File("test.db", filename="fight_database.db")
+        db_file = discord.File(BOT_PATH+"test.db", filename="fight_database.db")
         # Send the DB file to the user
         await interaction.response.send_message("Database exported to DB file", file=db_file)
     except Exception as e:
