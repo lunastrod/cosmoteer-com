@@ -408,9 +408,9 @@ async def send_long_message(interaction: discord.Interaction, text: str, chunk_s
             chunk = f"```\n{chunk}\n```"
 
         if start == 0:
-            await interaction.response.send_message(chunk, ephemeral=True)
+            await interaction.response.send_message(chunk)
         else:
-            await interaction.followup.send(chunk, ephemeral=True)
+            await interaction.followup.send(chunk)
 
         if end >= len(text):
             break
