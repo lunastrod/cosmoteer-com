@@ -20,7 +20,6 @@ API_NEW = "https://api.cosmoship.duckdns.org/"
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
 #BOT_PATH = ""
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
-#db = fight_db.FightDB()
 
 
 intents = discord.Intents.default()
@@ -392,6 +391,7 @@ async def rps(interaction: discord.Interaction, player_pick: str):
 
 # Function to split and send long messages at newline characters
 async def send_long_message(interaction: discord.Interaction, text: str, chunk_size: int = 1800, use_code_blocks: bool = False):
+    await interaction.response.defer()
     start = 0
     while start < len(text):
         end = start + chunk_size
@@ -409,7 +409,7 @@ async def send_long_message(interaction: discord.Interaction, text: str, chunk_s
             chunk = f"```\n{chunk}\n```"
 
         if start == 0:
-            await interaction.response.send_message(chunk)
+            await interaction.followup.send(chunk)
         else:
             await interaction.followup.send(chunk)
 
