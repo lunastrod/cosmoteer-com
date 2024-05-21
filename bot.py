@@ -389,6 +389,32 @@ async def rps(interaction: discord.Interaction, player_pick: str):
     else:
         await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
 
+# Function to split and send long messages at newline characters
+async def send_long_message(interaction: discord.Interaction, text: str, chunk_size: int = 2000, use_code_blocks: bool = False):
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        if end >= len(text):
+            chunk = text[start:]
+        else:
+            # Find the last newline character within the chunk
+            newline_index = text.rfind('\n', start, end)
+            if newline_index == -1:
+                newline_index = end
+            chunk = text[start:newline_index]
+            start = newline_index + 1
+        
+        if use_code_blocks:
+            chunk = f"```\n{chunk}\n```"
+
+        if start == 0:
+            await interaction.response.send_message(chunk, ephemeral=True)
+        else:
+            await interaction.followup.send(chunk, ephemeral=True)
+
+        if end >= len(text):
+            break
+
 @tree.command(name="db_add_fight", description='adds a new fight to the database')
 async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
     shipname1=shipname1.lower().strip()
@@ -460,7 +486,7 @@ async def db_get_matchups(interaction: discord.Interaction, shipname: str, playe
         for ship in losses:
             text_losses+=f"- **{ship}** : {', '.join(losses[ship])}\n"
         text=f"Matchups for **{shipname}**\n"+text_wins+"\n"+text_draws+"\n"+text_losses
-        await interaction.response.send_message(text)
+        await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{str(traceback.format_exception_only(type(e), e)[0])}")
         return
@@ -496,7 +522,7 @@ async def db_list_ships(interaction: discord.Interaction):
         text="Ships in the database:\n"
         for ship in ships:
             text+=f"- {ship}\n"
-        await interaction.response.send_message(text)
+        await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
@@ -509,7 +535,7 @@ async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: st
         text="Unknown matchups for "+shipname+":\n"
         for ship in ships:
             text+=f"- {ship}\n"
-        await interaction.response.send_message(text)
+        await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
@@ -529,9 +555,9 @@ async def db_export_csv(interaction: discord.Interaction):
 @tree.command(name="db_export_db", description='exports the database to a db file')
 async def db_export_db(interaction: discord.Interaction):
     try:
-        db.export_db("fight_database.db")
+        #db.export_db("fight_database.db")
         # Create a file object for the DB file
-        db_file = discord.File("fight_database.db", filename="fight_database.db")
+        db_file = discord.File("test.db", filename="fight_database.db")
         # Send the DB file to the user
         await interaction.response.send_message("Database exported to DB file", file=db_file)
     except Exception as e:
@@ -565,7 +591,7 @@ async def db_scoreboard(interaction: discord.Interaction):
         table = "Scoreboard             |Win|Draw|Lost|Total\n"
         for ship in ships:
             table += f"{ship.ljust(23)}|{str(scoreboard[ship][0]).ljust(3)}|{str(scoreboard[ship][1]).ljust(4)}|{str(scoreboard[ship][2]).ljust(4)}|{str(scoreboard[ship][3])}\n"
-        await interaction.response.send_message(f"```{table}```")
+        await send_long_message(interaction, table, use_code_blocks=True)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
