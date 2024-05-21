@@ -390,7 +390,7 @@ async def rps(interaction: discord.Interaction, player_pick: str):
         await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
 
 # Function to split and send long messages at newline characters
-async def send_long_message(interaction: discord.Interaction, text: str, chunk_size: int = 2000, use_code_blocks: bool = False):
+async def send_long_message(interaction: discord.Interaction, text: str, chunk_size: int = 1800, use_code_blocks: bool = False):
     start = 0
     while start < len(text):
         end = start + chunk_size
