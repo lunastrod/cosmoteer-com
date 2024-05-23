@@ -18,7 +18,7 @@ API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-BOT_PATH = ""
+#BOT_PATH = ""
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 
 
@@ -148,8 +148,6 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         print(dt.now(),"server responded")
         # Get the response
         data_returned = response.json()
-
-        print(data_returned)
 
         # Get the URL of the center of mass image
         url_com = data_returned['url_com']
