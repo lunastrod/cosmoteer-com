@@ -18,7 +18,7 @@ API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-#BOT_PATH = ""
+BOT_PATH = ""
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 
 
@@ -149,6 +149,8 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         # Get the response
         data_returned = response.json()
 
+        print(data_returned)
+
         # Get the URL of the center of mass image
         url_com = data_returned['url_com']
         # prepare the data
@@ -232,7 +234,7 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         print(dt.now(), "sent to Discord")
     except Exception as e:
         print(dt.now(),"error",e)
-        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e)
+        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e) + str(data_returned)
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
 
