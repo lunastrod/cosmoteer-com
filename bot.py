@@ -57,17 +57,17 @@ Below is a list of commands that are used to access and contribute to the databa
 
 **/db_list_ships:** Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
 
-**/db_add_ships:** Adds a new ship to the database.
+**/db_add_ships:** Adds a new ship to the database. 
 
 **/db_rename_ship:** Changes the existing name of a ship to a different specified one. Only LunastroD can use this command.
 
-**/db_scoreboard:** Shows the win/loss/draw ratio for each ship in the database based on matchups.
+**/db_scoreboard:** Shows the win/loss/draw ratio for each ship in the database based on matchups. The optional "playername" parameter can be used to only show the scoreboard for a certain player.
 
 **/db_get_matchups:** Lists each matchup (win, loss, draw) of a specified ship from the database. The optional "playername" parameter can be used to only show the matchups a certain player submitted. 
 
 **/db_get_unknown_matchups:** Lists each matchup that has no votes from a specified ship from the database. The optional "playername" parameter can be used to only show the unknown matchups for a certain player.
 
-**/db_add_fight:** Add a new matchup between 2 specified ship in the database.
+**/db_add_fight:** Add a new matchup between 2 or more specified ships in the database. To add multiple fights for one ship type use the second parameter and separate ships with a comma but no space.
 
 **/db_remove_fight:** Removes a matchup between 2 specified ship in the database.
 
@@ -419,25 +419,45 @@ async def send_long_message(interaction: discord.Interaction, text: str, chunk_s
 @tree.command(name="db_add_fight", description='adds a new fight to the database')
 async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
     shipname1=shipname1.lower().strip()
-    shipname2=shipname2.lower().strip()
-    result=result.lower().strip()
-    if result=="win" or result=="w":
+    shipname2 = shipname2.lower().strip()
+    result = result.lower().strip()
+    switched_ship_names = False
+    not_a_draw = True
+
+    if result=="draw" or result=="d":
+        result=fight_db.FIGHT_RESULT.DRAW
+        not_a_draw = False
+    elif result=="win" or result=="w":
         result=fight_db.FIGHT_RESULT.WIN
     elif result=="lose" or result=="l":
         result=fight_db.FIGHT_RESULT.WIN
         temp=shipname1
         shipname1=shipname2
         shipname2=temp
-    elif result=="draw" or result=="d":
-        result=fight_db.FIGHT_RESULT.DRAW
+        switched_ship_names = True
     else:
         await interaction.response.send_message(f"Error: result must be 'win', 'lose' or 'draw'")
         return
 
-    author=str(interaction.user.id)
-    author_name=interaction.user.display_name
+    author = str(interaction.user.id)
+    author_name = interaction.user.display_name
+
     try:
-        db.insert_fight(shipname1, shipname2, author, author_name, result)
+        if not switched_ship_names:
+            for ship_name in shipname2.split(","):
+                if not_a_draw and ship_name == shipname1:
+                    await interaction.response.send_message(f"Can not add a non draw result for 2 ships of the same type.")
+                    return
+                else:
+                    db.insert_fight(shipname1, ship_name, author, author_name, result)
+        else:
+            for ship_name in shipname1.split(","):
+                if not_a_draw and ship_name == shipname2:
+                    await interaction.response.send_message(f"Can not add a non draw result for 2 ships of the same type.")
+                    return
+                else:
+                    db.insert_fight(ship_name, shipname2, author, author_name, result)
+
         winner_text=""
         if result==fight_db.FIGHT_RESULT.WIN:
             winner_text="the winner is "+shipname1
@@ -580,12 +600,12 @@ async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_na
         return
     
 @tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
-async def db_scoreboard(interaction: discord.Interaction):
+async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
     try:
         ships=db.get_ships()
         scoreboard={}
         for s in ships:
-            wins, draws, losses=db.get_matchups(s)
+            wins, draws, losses=db.get_matchups(s, player_name)
             scoreboard[s]=[len(wins), len(draws), len(losses), len(wins)+len(draws)+len(losses)]
         #sort the ships by number of wins
         ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
