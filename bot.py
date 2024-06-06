@@ -141,7 +141,7 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
             url = API_NEW + "analyze"
             response = requests.post(url, json=json_data)
             response.raise_for_status()
-        except requests.exceptions.HTTPError:
+        except:
             url = API_URL + "analyze"
             response = requests.post(url, json=json_data)
             response.raise_for_status()
@@ -232,7 +232,10 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         print(dt.now(), "sent to Discord")
     except Exception as e:
         print(dt.now(),"error",e)
-        text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e) + str(data_returned)
+        if("data_returned" in locals()):#if the data was returned
+            text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e) + str(data_returned)
+        else:
+            text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e) + "server did not respond"
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
 
@@ -247,7 +250,7 @@ async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scal
         url = API_NEW + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
         response = requests.get(url)
         response.raise_for_status()
-    except requests.exceptions.HTTPError:
+    except:
         url = API_URL + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
         response = requests.get(url)
         response.raise_for_status()
