@@ -18,7 +18,7 @@ API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-#BOT_PATH = ""
+BOT_PATH = ""
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 
 
@@ -601,7 +601,8 @@ async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_na
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-    
+
+"""
 @tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
 async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
     try:
@@ -615,6 +616,37 @@ async def db_scoreboard(interaction: discord.Interaction, player_name: str=None)
         table = "Scoreboard             |Win|Draw|Lost|Total\n"
         for ship in ships:
             table += f"{ship.ljust(23)}|{str(scoreboard[ship][0]).ljust(3)}|{str(scoreboard[ship][1]).ljust(4)}|{str(scoreboard[ship][2]).ljust(4)}|{str(scoreboard[ship][3])}\n"
+        await send_long_message(interaction, table, use_code_blocks=True)
+    except Exception as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
+"""
+
+@tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
+async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
+    try:
+        ships=db.get_ships()
+        scoreboard={}
+        for s in ships:
+            scoreboard[s]=[0,0,0,0]
+            for s2 in ships:
+                wins,draws,losses=db.get_matchups(s,player_name)
+                players_win=len(wins.get(s2,[]))
+                players_draw=len(draws.get(s2,[]))
+                players_lose=len(losses.get(s2,[]))
+                players_matches=players_win+players_draw+players_lose
+                if players_matches==0:
+                    continue
+                scoreboard[s][0]+=players_win/players_matches
+                scoreboard[s][1]+=players_draw/players_matches
+                scoreboard[s][2]+=players_lose/players_matches
+                scoreboard[s][3]+=1
+
+        #sort the ships by number of wins
+        ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
+        table = "Scoreboard             |Win |Draw|Lost|Total\n"
+        for ship in ships:
+            table += f"{ship.ljust(23)}|{str(round(scoreboard[ship][0],1)).rjust(4)}|{str(round(scoreboard[ship][1],1)).rjust(4)}|{str(round(scoreboard[ship][2],1)).rjust(4)}|{str(scoreboard[ship][3])}\n"
         await send_long_message(interaction, table, use_code_blocks=True)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
