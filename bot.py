@@ -18,7 +18,7 @@ API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-#BOT_PATH = ""
+BOT_PATH = ""
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 
 
@@ -394,7 +394,6 @@ async def rps(interaction: discord.Interaction, player_pick: str):
 
 # Function to split and send long messages at newline characters
 async def send_long_message(interaction: discord.Interaction, text: str, chunk_size: int = 1800, use_code_blocks: bool = False):
-    await interaction.response.defer()
     start = 0
     while start < len(text):
         end = start + chunk_size
@@ -499,6 +498,7 @@ async def db_remove_fight(interaction: discord.Interaction, shipname1: str, ship
 async def db_get_matchups(interaction: discord.Interaction, shipname: str, playername: str=None):
     shipname=shipname.lower().strip()
     try:
+        await interaction.response.defer()
         wins, draws, losses=db.get_matchups(shipname, playername)
         text_wins="Wins:\n"
         for ship in wins:
@@ -540,6 +540,7 @@ async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, sh
 @tree.command(name="db_list_ships", description='lists all ships in the database')
 async def db_list_ships(interaction: discord.Interaction):
     try:
+        await interaction.response.defer()
         ships=db.get_ships()
         #sort the ships
         ships.sort()
@@ -555,6 +556,7 @@ async def db_list_ships(interaction: discord.Interaction):
 async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: str, player_name: str=None):
     shipname=shipname.lower().strip()
     try:
+        await interaction.response.defer()
         ships=db.get_unknown_matchups(shipname, player_name)
         text="Unknown matchups for "+shipname+":\n"
         for ship in ships:
@@ -602,29 +604,10 @@ async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_na
         await interaction.response.send_message(f"Error:{e}")
         return
 
-"""
 @tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
 async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
     try:
-        ships=db.get_ships()
-        scoreboard={}
-        for s in ships:
-            wins, draws, losses=db.get_matchups(s, player_name)
-            scoreboard[s]=[len(wins), len(draws), len(losses), len(wins)+len(draws)+len(losses)]
-        #sort the ships by number of wins
-        ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
-        table = "Scoreboard             |Win|Draw|Lost|Total\n"
-        for ship in ships:
-            table += f"{ship.ljust(23)}|{str(scoreboard[ship][0]).ljust(3)}|{str(scoreboard[ship][1]).ljust(4)}|{str(scoreboard[ship][2]).ljust(4)}|{str(scoreboard[ship][3])}\n"
-        await send_long_message(interaction, table, use_code_blocks=True)
-    except Exception as e:
-        await interaction.response.send_message(f"Error:{e}")
-        return
-"""
-
-@tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
-async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
-    try:
+        await interaction.response.defer()
         ships=db.get_ships()
         scoreboard={}
         for s in ships:
