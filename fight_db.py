@@ -20,16 +20,16 @@ class FightDB:
         self.cur.execute("""CREATE TABLE IF NOT EXISTS Archetypes (
                                         id INTEGER PRIMARY KEY,
                                         shipname TEXT NOT NULL,
-                                        parentname TEXT,
+                                        parentid TEXT,
                                         description TEXT
                                     );""")
         self.con.commit()
 
     def insert_fight(self, shipname1, shipname2, author, author_name, result):
         # Check if shipname1 and shipname2 exist in the database
-        if not self.ship_exists(shipname1):
+        if not self.archetype_exists(shipname1):
             raise ValueError(f"Ship '{shipname1}' does not exist in the database")
-        if not self.ship_exists(shipname2):
+        if not self.archetype_exists(shipname2):
             raise ValueError(f"Ship '{shipname2}' does not exist in the database")
 
 
@@ -45,7 +45,6 @@ class FightDB:
 
                 # Insert the new fight
                 self.cur.execute("INSERT INTO Fights (shipname1, shipname2, author, author_name, result) VALUES (?, ?, ?, ?, ?)", (shipname1, shipname2, author, author_name, result))
-                print("Added fight " + shipname1 + " vs " + shipname2)
             else:
                 for ship in self.archetypes_children(shipname2):
                     self.insert_fight(shipname1, ship, author, author_name, result)
@@ -54,16 +53,31 @@ class FightDB:
                 self.insert_fight(ship, shipname2, author, author_name, result)
         self.con.commit()
 
-    def ship_exists(self, shipname):
+    def archetype_exists(self, shipname):
         self.cur.execute("SELECT 1 FROM Archetypes WHERE shipname = ?", (shipname,))
         return bool(self.cur.fetchone())
 
     def ship_is_leaf(self, shipname):
-        self.cur.execute("SELECT 1 FROM Archetypes WHERE parentname = ?", (shipname,))
+        self.cur.execute("SELECT 1 FROM Archetypes WHERE parentid = ?", (self.get_ship_id(shipname),))
         return not bool(self.cur.fetchone())
 
+    def get_ship_id(self, shipname):
+        if shipname is None:
+            return None
+        self.cur.execute("SELECT id FROM Archetypes WHERE shipname=?", (shipname,))
+        return self.cur.fetchone()[0]
+
+    def get_ships_parentid(self, shipname):
+        if shipname is None:
+            return None
+        self.cur.execute("SELECT parentid FROM Archetypes WHERE shipname=?", (shipname,))
+        parent = self.cur.fetchone()
+        if parent is None:
+            return None
+        return parent[0]
+
     def archetypes_children(self, shipname):
-        self.cur.execute("SELECT shipname FROM Archetypes WHERE parentname=?", (shipname,))
+        self.cur.execute("SELECT shipname FROM Archetypes WHERE parentid=?", (self.get_ship_id(shipname),))
         children = self.cur.fetchall()
         if children is None:
             children = ()
@@ -80,9 +94,10 @@ class FightDB:
 
     def add_ship(self, shipname, parent_name=None, description=None):
         # Add a fight where the ship fights against itself
-        if not self.ship_exists(shipname):
+        if not self.archetype_exists(shipname):
             #self.cur.execute("INSERT INTO Fights (shipname1, shipname2, author, author_name, result) VALUES (?, ?, ?, ?, ?)", (shipname, shipname, author, author_name, FIGHT_RESULT.DRAW))
-            self.cur.execute("INSERT INTO Archetypes (shipname, parentname, description) VALUES (?, ?, ?)", (shipname, parent_name, description))
+            parent_id = self.get_ship_id(parent_name)
+            self.cur.execute("INSERT INTO Archetypes (shipname, parentid, description) VALUES (?, ?, ?)", (shipname, parent_id, description))
             self.con.commit()
 
     def get_fights(self):
@@ -94,7 +109,7 @@ class FightDB:
         draws={}
         losses={}
         # Get all fights where the specified ship is involved
-        if not self.ship_exists(ship_name):
+        if not self.archetype_exists(ship_name):
             raise ValueError(f"Ship '{ship_name}' does not exist in the database")
         self.cur.execute("SELECT shipname1, shipname2, author_name, result FROM Fights WHERE (shipname1 = ? OR shipname2 = ?)", (ship_name, ship_name))
         fight_data = self.cur.fetchall()
@@ -151,10 +166,10 @@ class FightDB:
             for row in self.cur.fetchall():
                 f.write(",".join(map(str, row)) + "\n")"""
 
-        self.cur.execute("SELECT shipname, parentname, description FROM Archetypes")
+        self.cur.execute("SELECT shipname, parentid, description FROM Archetypes")
         with open(filename, "w", encoding="utf-8") as f:
             f.write("---Archetypes---" + "\n")
-            f.write("shipname,parentname,description\n")
+            f.write("shipname,parentid,description\n")
             for row in self.cur.fetchall():
                 f.write(",".join(map(str, row)) + "\n")
             f.write("\n")
@@ -175,9 +190,9 @@ class FightDB:
 
     def simulate_fight(self, shipname1, shipname2):
         # check if the ships exist
-        if not self.ship_exists(shipname1):
+        if not self.archetype_exists(shipname1):
             raise ValueError(f"Ship '{shipname1}' does not exist in the database")
-        if not self.ship_exists(shipname2):
+        if not self.archetype_exists(shipname2):
             raise ValueError(f"Ship '{shipname2}' does not exist in the database")
         # Check if the fight is in the database
         result_authors = {}
@@ -199,18 +214,24 @@ class FightDB:
 
     def get_ships(self):
         self.cur.execute("SELECT DISTINCT shipname FROM Archetypes")
+        ships = [row[0] for row in self.cur.fetchall()]
+        leaf_ships = [ship for ship in ships if self.ship_is_leaf(ship)]
+        return leaf_ships
+
+    def get_archetypes(self):
+        self.cur.execute("SELECT DISTINCT shipname FROM Archetypes")
         return [row[0] for row in self.cur.fetchall()]
 
     def rename_ship(self, old_name, new_name=None, new_parent_name=None, new_description=None):
         #check if the ship exists
-        if not self.ship_exists(old_name):
+        if not self.archetype_exists(old_name):
             raise ValueError(f"Ship '{old_name}' does not exist in the database")
         current_name = old_name
         return_message = "Changes of " + old_name + ": "
 
         if new_name!=None:
             #check if the new name already exists
-            if self.ship_exists(new_name):
+            if self.archetype_exists(new_name):
                 raise ValueError(f"Ship '{new_name}' already exists in the database")
             # Rename the ship in the database
             self.cur.execute("UPDATE Fights SET shipname1 = ? WHERE shipname1 = ?", (new_name, old_name))
@@ -221,7 +242,7 @@ class FightDB:
 
         if new_parent_name!=None:
             #check if the new name exists
-            if not self.ship_exists(new_parent_name):
+            if not self.archetype_exists(new_parent_name):
                 raise ValueError(f"Ship '{new_parent_name}' does not exist in the database")
             #Checks to preserve the tree structure
             if new_parent_name == current_name:
@@ -231,7 +252,7 @@ class FightDB:
                     raise ValueError(f"Cant have a child as parent")
 
             # Rename the parent in the database
-            self.cur.execute("UPDATE Archetypes SET parentname = ? WHERE shipname = ?", (new_parent_name, current_name))
+            self.cur.execute("UPDATE Archetypes SET parentid = ? WHERE shipname = ?", (self.get_ship_id(new_parent_name), current_name))
             return_message += " parent changed to " + new_parent_name + ", "
 
         if new_description!=None:
@@ -248,3 +269,4 @@ if(__name__=="__main__"):
     db = FightDB()
     print(db.get_fights())
     db.close()
+
