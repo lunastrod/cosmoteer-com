@@ -1,11 +1,6 @@
-import sqlite3
-import secret_token
 import fight_db
 
-import sqlite3
-from graphviz import Digraph
-
-BOT_PATH = secret_token.path
+BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 
 def visualize_tree():
