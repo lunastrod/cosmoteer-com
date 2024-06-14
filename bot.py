@@ -53,7 +53,7 @@ db_help_text = f""+version_text+"""
 The Cosmoteer Design Tools bot has a database of every known multiplayer elimination archetype and their matchups that can be contributed to by anybody.
 Below is a list of commands that are used to access and contribute to the database.
 
-**/help:** Shows this message
+**/help:** Shows this message.
 
 **/db_list_ships:** Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
 
