@@ -17,8 +17,8 @@ from datetime import datetime as dt
 API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
-BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-#BOT_PATH = ""
+#BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
+BOT_PATH = secret_token.path
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 
 
@@ -469,15 +469,29 @@ async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipnam
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
+
+
+@tree.command(name="db_add_all_draws", description='adds a new ship to the database')
+async def db_add_all_draws(interaction: discord.Interaction):
+    author = str(interaction.user.id)
+    author_name = interaction.user.display_name
+    try:
+        for ship in db.get_ships():
+            db.insert_fight(ship, ship, author, author_name, 0)
+        await interaction.response.send_message(f"All draws ofthe same ships fighting each other added to the database")
+    except Exception as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
     
 @tree.command(name="db_add_ship", description='adds a new ship to the database')
-async def db_add_ship(interaction: discord.Interaction, shipname: str):
+async def db_add_ship(interaction: discord.Interaction, shipname: str, parentname: str=None, description: str=None):
     shipname=shipname.lower().strip()
-    author=str(interaction.user.id)
-    author_name=interaction.user.display_name
+    if parentname!=None:
+        parentname = parentname.lower().strip()
     try:
-        db.add_ship(shipname, author, author_name)
-        await interaction.response.send_message(f"Ship {shipname} added to the database")
+        backup = backup_file()
+        db.add_ship(shipname, parentname, description)
+        await interaction.response.send_message(f"Ship {shipname} added to the database", file=backup)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
@@ -591,15 +605,19 @@ async def db_export_db(interaction: discord.Interaction):
         return
     
 @tree.command(name="db_rename_ship", description='renames a ship in the database')
-async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str):
+async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str=None, new_parent_name: str=None, new_description: str=None):
     old_name=old_name.lower().strip()
-    new_name=new_name.lower().strip()
+    if new_name!=None:
+        new_name=new_name.lower().strip()
     try:
+        backup = backup_file()
         author=str(interaction.user.id)
-        if author!="457210821773361152":
-            raise ValueError("Only LunastroD can rename ships!")
-        db.rename_ship(old_name, new_name)
-        await interaction.response.send_message(f"Ship {old_name} renamed to {new_name}")
+
+        if author!="457210821773361152" and author != "450347288301273108":
+            raise ValueError("Only LunastroD or Plaus can rename ships!")
+        message = db.rename_ship(old_name, new_name, new_parent_name, new_description)
+
+        await interaction.response.send_message(message, file=backup)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
@@ -634,6 +652,13 @@ async def db_scoreboard(interaction: discord.Interaction, player_name: str=None)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
+
+def backup_file():
+    # db.export_db("fight_database.db")
+    # Create a file object for the DB file
+    db_file = discord.File(BOT_PATH + "test.db", filename="fight_database.db")
+    # Send the DB file to the user
+    return db_file
 
 # #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
