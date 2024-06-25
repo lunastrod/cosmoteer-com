@@ -1,4 +1,5 @@
 import fight_db
+import secret_token
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")

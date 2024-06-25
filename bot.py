@@ -513,8 +513,8 @@ async def db_add_ship(interaction: discord.Interaction, shipname: str, parentnam
             await interaction.response.send_message(f"That parent does not exist")
 
         backup = backup_file()
-        db.add_ship(shipname, parentname, description)
         await interaction.response.send_message(f"Ship {shipname} added to the database", file=backup)
+        db.add_ship(shipname, parentname, description)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
@@ -647,12 +647,16 @@ async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_na
 
         if author!="457210821773361152" and author != "450347288301273108":
             raise ValueError("Only LunastroD or Plaus can rename ships!")
-        message = db.rename_ship(old_name, new_name, new_parent_name, new_description)
 
-        await interaction.response.send_message(message, file=backup)
+        await interaction.response.send_message("Backup file created.", file=backup)
+        message = db.rename_ship(old_name, new_name, new_parent_name, new_description)
+        await interaction.followup.send(message)
     except Exception as e:
-        await interaction.response.send_message(f"Error:{e}")
-        return
+        if not interaction.response.is_done():
+            await interaction.response.send_message(f"Error: {e}")
+        else:
+            await interaction.followup.send(f"Error: {e}")
+
 
 @tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
 async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
