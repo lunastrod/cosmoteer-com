@@ -3,6 +3,7 @@ from discord import app_commands
 import secret_token
 
 import fight_db
+import data_analysis
 
 import base64
 from io import BytesIO
@@ -18,7 +19,6 @@ API_URL = "https://cosmo-api-six.vercel.app/"
 API_NEW = "https://api.cosmoship.duckdns.org/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-#BOT_PATH = ""
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
 
 
@@ -53,13 +53,15 @@ db_help_text = f""+version_text+"""
 The Cosmoteer Design Tools bot has a database of every known multiplayer elimination archetype and their matchups that can be contributed to by anybody.
 Below is a list of commands that are used to access and contribute to the database.
 
-**/help:** Shows this message
+**/help:** Shows this message.
 
 **/db_list_ships:** Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
 
-**/db_add_ships:** Adds a new ship to the database. 
+**/db_draw_archetype_tree:** Draws the family tree of archetypes.
 
-**/db_rename_ship:** Changes the existing name of a ship to a different specified one. Only LunastroD can use this command.
+**/db_add_ship:** Adds a new ship to the database. Also generates a backup before execution.
+
+**/db_rename_ship:** Changes the existing name, parents name or description of a ship to a different specified one. Also generates a backup before execution. Only LunastroD or Plaus can use this command.
 
 **/db_scoreboard:** Shows the win/loss/draw ratio for each ship in the database based on matchups. The optional "playername" parameter can be used to only show the scoreboard for a certain player.
 
@@ -67,13 +69,15 @@ Below is a list of commands that are used to access and contribute to the databa
 
 **/db_get_unknown_matchups:** Lists each matchup that has no votes from a specified ship from the database. The optional "playername" parameter can be used to only show the unknown matchups for a certain player.
 
-**/db_add_fight:** Add a new matchup between 2 or more specified ships in the database. To add multiple fights for one ship type use the second parameter and separate ships with a comma but no space.
+**/db_add_fight:** Add a new matchup between 2 or more specified ships in the database. Using a ship category instead of a ship adds all fights of ships under that category. To add multiple fights for one ship/category use the second parameter and separate ships with a comma but no space.
 
 **/db_remove_fight:** Removes a matchup between 2 specified ship in the database.
 
 **/db_simulate_fight:** Simulates a fight between 2 specified ship, based on the listed matchup in the database.
 
 **/db_export_csv:** Exports the entire database to a .csv file.
+
+**/db_add_all_draws: Add all draws of the same ships facing each other to the database.**
 """
 
 @client.event
@@ -362,7 +366,8 @@ async def help(interaction: discord.Interaction, show_db_commands: bool = False)
             print(dt.now(),"Error:",e)
             await interaction.followup.send("Error:"+str(e))
     else:
-            await interaction.response.send_message(db_help_text)
+        await interaction.response.defer()
+        await send_long_message(interaction, db_help_text)
 
 @tree.command(name="elim_rps", description='play rock-paper-scissors, but with elimination archtypes!')
 async def rps(interaction: discord.Interaction, player_pick: str):
@@ -469,15 +474,47 @@ async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipnam
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-    
-@tree.command(name="db_add_ship", description='adds a new ship to the database')
-async def db_add_ship(interaction: discord.Interaction, shipname: str):
-    shipname=shipname.lower().strip()
-    author=str(interaction.user.id)
-    author_name=interaction.user.display_name
+
+"""
+@tree.command(name="db_add_all_draws", description='adds a new ship to the database')
+async def db_add_all_draws(interaction: discord.Interaction):
+    author = str(interaction.user.id)
+    author_name = interaction.user.display_name
     try:
-        db.add_ship(shipname, author, author_name)
-        await interaction.response.send_message(f"Ship {shipname} added to the database")
+        for ship in db.get_ships():
+            db.insert_fight(ship, ship, author, author_name, 0)
+        await interaction.response.send_message(f"All draws of the same ships fighting each other added to the database")
+    except Exception as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return"""
+
+
+@tree.command(name="db_add_all_draws", description='adds a new ship to the database')
+async def db_add_all_draws(interaction: discord.Interaction):
+    author = str(interaction.user.id)
+    author_name = interaction.user.display_name
+    try:
+        await interaction.response.defer()  # Acknowledge the interaction to avoid timeout
+        for ship in db.get_ships():
+            db.insert_fight(ship, ship, author, author_name, 0)
+        await interaction.followup.send("All draws of the same ships fighting each other added to the database")
+    except Exception as e:
+        await interaction.followup.send(f"Error: {e}")
+
+@tree.command(name="db_add_ship", description='adds a new ship to the database')
+async def db_add_ship(interaction: discord.Interaction, shipname: str, parentname: str=None, description: str=None):
+    shipname=shipname.lower().strip()
+    if parentname!=None:
+        parentname = parentname.lower().strip()
+    try:
+        if parentname == shipname:
+            await interaction.response.send_message(f"Ship cant be its own parent")
+        if (not db.archetype_exists(parentname)) and parentname is not None:
+            await interaction.response.send_message(f"That parent does not exist")
+
+        backup = backup_file()
+        await interaction.response.send_message(f"Ship {shipname} added to the database", file=backup)
+        db.add_ship(shipname, parentname, description)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
@@ -551,6 +588,16 @@ async def db_list_ships(interaction: discord.Interaction):
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
+
+@tree.command(name="db_draw_archetype_tree", description='Draws a the archetype tree')
+async def db_draw_archetype_tree(interaction: discord.Interaction):
+    try:
+        await interaction.response.defer()
+        text = data_analysis.visualize_tree()
+        await send_long_message(interaction, text)
+    except Exception as e:
+        await interaction.response.send_message(f"Error:{e}")
+        return
     
 @tree.command(name="db_get_unknown_matchups", description='gets the unknown matchups of a ship from the database')
 async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: str, player_name: str=None):
@@ -569,9 +616,8 @@ async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: st
 @tree.command(name="db_export_csv", description='exports the database to a csv file')
 async def db_export_csv(interaction: discord.Interaction):
     try:
-        db.export_csv("fight_database.csv")
         # Create a file object for the CSV file
-        csv_file = discord.File("fight_database.csv", filename="fight_database.csv")
+        csv_file = backup_file(is_csv=True)
         # Send the CSV file to the user
         await interaction.response.send_message("Database exported to CSV file", file=csv_file)
     except Exception as e:
@@ -583,7 +629,7 @@ async def db_export_db(interaction: discord.Interaction):
     try:
         #db.export_db("fight_database.db")
         # Create a file object for the DB file
-        db_file = discord.File(BOT_PATH+"test.db", filename="fight_database.db")
+        db_file = backup_file()
         # Send the DB file to the user
         await interaction.response.send_message("Database exported to DB file", file=db_file)
     except Exception as e:
@@ -591,18 +637,26 @@ async def db_export_db(interaction: discord.Interaction):
         return
     
 @tree.command(name="db_rename_ship", description='renames a ship in the database')
-async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str):
+async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str=None, new_parent_name: str=None, new_description: str=None):
     old_name=old_name.lower().strip()
-    new_name=new_name.lower().strip()
+    if new_name!=None:
+        new_name=new_name.lower().strip()
     try:
+        backup = backup_file()
         author=str(interaction.user.id)
-        if author!="457210821773361152":
-            raise ValueError("Only LunastroD can rename ships!")
-        db.rename_ship(old_name, new_name)
-        await interaction.response.send_message(f"Ship {old_name} renamed to {new_name}")
+
+        if author!="457210821773361152" and author != "450347288301273108":
+            raise ValueError("Only LunastroD or Plaus can rename ships!")
+
+        await interaction.response.send_message("Backup file created.", file=backup)
+        message = db.rename_ship(old_name, new_name, new_parent_name, new_description)
+        await interaction.followup.send(message)
     except Exception as e:
-        await interaction.response.send_message(f"Error:{e}")
-        return
+        if not interaction.response.is_done():
+            await interaction.response.send_message(f"Error: {e}")
+        else:
+            await interaction.followup.send(f"Error: {e}")
+
 
 @tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
 async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
@@ -634,6 +688,16 @@ async def db_scoreboard(interaction: discord.Interaction, player_name: str=None)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
+
+def backup_file(is_csv=False):
+    if not is_csv:
+        db.export_db("fight_database.db")
+        # Create a file object for the DB file
+        db_file = discord.File(BOT_PATH + "test.db", filename="fight_database.db")
+        return db_file
+    db.export_csv("fight_database.csv")
+    # Create a file object for the CSV file
+    return discord.File("fight_database.csv", filename="fight_database.csv")
 
 # #client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
