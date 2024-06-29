@@ -265,6 +265,21 @@ class FightDB:
     def close(self):
         self.con.close()
 
+    def get_average_match(self,ship1, ship2):
+        self.cur.execute("SELECT result FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND result = 1)", (ship1, ship2))
+        num_wins = self.cur.fetchall().__len__()
+        self.cur.execute("SELECT result FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND result = 1)", (ship2, ship1))
+        num_loss = self.cur.fetchall().__len__()
+        self.cur.execute("SELECT result FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND result = 0)", (ship1, ship2))
+        num_draw = self.cur.fetchall().__len__()
+        self.cur.execute("SELECT result FROM Fights WHERE (shipname1 = ? AND shipname2 = ? AND result = 0)", (ship2, ship1))
+        num_draw += self.cur.fetchall().__len__()
+        if num_wins>num_loss and num_wins>num_draw:
+            return 1
+        if num_loss>num_wins and num_loss>num_draw:
+            return -1
+        return 0
+
 if(__name__=="__main__"):
     db = FightDB()
     print(db.get_fights())
