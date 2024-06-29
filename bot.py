@@ -549,7 +549,7 @@ async def db_get_matchups(interaction: discord.Interaction, shipname: str, playe
         text=f"Matchups for **{shipname}**\n"+text_wins+"\n"+text_draws+"\n"+text_losses
         await send_long_message(interaction, text)
     except Exception as e:
-        await interaction.response.send_message(f"Error:{str(traceback.format_exception_only(type(e), e)[0])}")
+        await interaction.followup.send(f"Error:{str(traceback.format_exception_only(type(e), e)[0])}")
         return
 
     
