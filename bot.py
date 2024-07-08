@@ -63,6 +63,8 @@ Below is a list of commands that are used to access and contribute to the databa
 
 **/db_rename_ship:** Changes the existing name, parents name or description of a ship to a different specified one. Also generates a backup before execution. Only LunastroD or Plaus can use this command.
 
+**/db_ship_meta_analysis:** Shows ship specific values and stats. 
+
 **/db_scoreboard:** Shows the win/loss/draw ratio for each ship in the database based on matchups. The optional "playername" parameter can be used to only show the scoreboard for a certain player.
 
 **/db_get_matchups:** Lists each matchup (win, loss, draw) of a specified ship from the database. The optional "playername" parameter can be used to only show the matchups a certain player submitted. 
@@ -552,6 +554,19 @@ async def db_get_matchups(interaction: discord.Interaction, shipname: str, playe
         await interaction.followup.send(f"Error:{str(traceback.format_exception_only(type(e), e)[0])}")
         return
 
+@tree.command(name="db_ship_meta_analysis", description='Analyses a ships place in the meta.')
+async def db_get_matchups(interaction: discord.Interaction, shipname: str):
+    shipname=shipname.lower().strip()
+    try:
+        await interaction.response.defer()
+        text = "Name: " + shipname + "\n"
+        text += "Description: " + db.get_ship_description(shipname) + "\n"
+        text += "Page rank: " + str(data_analysis.page_rank_ship(shipname)) + "\n"
+        await send_long_message(interaction, text)
+    except Exception as e:
+        await interaction.followup.send(f"Error:{str(traceback.format_exception_only(type(e), e)[0])}")
+        return
+
     
 @tree.command(name="db_simulate_fight", description='simulates a fight between two ships')
 async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, shipname2: str):
@@ -657,15 +672,20 @@ async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_na
         else:
             await interaction.followup.send(f"Error: {e}")
 
-
 @tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
-async def db_scoreboard(interaction: discord.Interaction, player_name: str=None):
+async def db_scoreboard(interaction: discord.Interaction, player_name: str=None, sort_by: str="win"):
     try:
         await interaction.response.defer()
         ships=db.get_ships()
+        page_rank_dic = data_analysis.page_rank(data_analysis.get_fights_graph())
         scoreboard={}
+        sort_list = ["win","draw","loss","matches","page rank"]
+        if not sort_list.__contains__(sort_by):
+            raise ValueError("Can only sort by: " + str(sort_list))
+
         for s in ships:
-            scoreboard[s]=[0,0,0,0]
+            scoreboard[s]=[0,0,0,0,0]
+            scoreboard[s][4]=page_rank_dic[s].__round__(4)
             for s2 in ships:
                 wins,draws,losses=db.get_matchups(s,player_name)
                 players_win=len(wins.get(s2,[]))
@@ -679,14 +699,15 @@ async def db_scoreboard(interaction: discord.Interaction, player_name: str=None)
                 scoreboard[s][2]+=players_lose/players_matches
                 scoreboard[s][3]+=1
 
-        #sort the ships by number of wins
-        ships.sort(key=lambda x: scoreboard[x][0], reverse=True)
-        table = "Scoreboard             |Win |Draw|Lost|Total\n"
+        #sort the ships based on the specified argument
+        ships.sort(key=lambda x: scoreboard[x][sort_list.index(sort_by)], reverse=True)
+        leading_message = f"Scoreboard ({sort_by.capitalize()})"
+        table = f"{leading_message.ljust(22)} |Win|Draw|Lost|Total|Page Rank\n"
         for ship in ships:
-            table += f"{ship.ljust(23)}|{str(round(scoreboard[ship][0],1)).rjust(4)}|{str(round(scoreboard[ship][1],1)).rjust(4)}|{str(round(scoreboard[ship][2],1)).rjust(4)}|{str(scoreboard[ship][3])}\n"
+            table += f"{ship.ljust(23)}|{str(round(scoreboard[ship][0],1)).rjust(4)}|{str(round(scoreboard[ship][1],1)).rjust(4)}|{str(round(scoreboard[ship][2],1)).rjust(4)}|{str(scoreboard[ship][3]).rjust(3)}|{str(scoreboard[ship][4])}\n"
         await send_long_message(interaction, table, use_code_blocks=True)
     except Exception as e:
-        await interaction.response.send_message(f"Error:{e}")
+        await interaction.followup.send(f"Error:{e}")
         return
 
 def backup_file(is_csv=False):
