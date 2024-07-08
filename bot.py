@@ -15,8 +15,8 @@ import traceback
 from datetime import datetime as dt
 
 
-API_URL = "https://cosmo-api-six.vercel.app/"
-API_NEW = "https://api.cosmoship.duckdns.org/"
+API_URL = "https://api.cosmoship.duckdns.org/"
+API_NEW = "https://cosmo-api-six.vercel.app/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
 db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
