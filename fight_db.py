@@ -76,6 +76,15 @@ class FightDB:
             return None
         return parent[0]
 
+    def get_ship_description(self, shipname):
+        if shipname is None:
+            return None
+        self.cur.execute("SELECT description FROM Archetypes WHERE shipname=?", (shipname,))
+        description = self.cur.fetchone()[0]
+        if description == None:
+            return ""
+        return description
+
     def archetypes_children(self, shipname):
         self.cur.execute("SELECT shipname FROM Archetypes WHERE parentid=?", (self.get_ship_id(shipname),))
         children = self.cur.fetchall()
