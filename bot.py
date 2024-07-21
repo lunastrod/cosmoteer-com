@@ -427,9 +427,9 @@ async def send_long_message(interaction: discord.Interaction, text: str, chunk_s
 
 @tree.command(name="db_add_fight", description='adds a new fight to the database')
 async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
-    shipname1=shipname1.lower().strip()
-    shipname2 = shipname2.lower().strip()
-    result = result.lower().strip()
+    shipname1=shipname1.lower().strip().replace('_', ' ')
+    shipname2 = shipname2.lower().strip().replace('_', ' ')
+    result = result.lower().strip().replace('_', ' ')
     switched_ship_names = False
     not_a_draw = True
 
@@ -523,8 +523,8 @@ async def db_add_ship(interaction: discord.Interaction, shipname: str, parentnam
     
 @tree.command(name="db_remove_fight", description='removes a fight from the database')
 async def db_remove_fight(interaction: discord.Interaction, shipname1: str, shipname2: str):
-    shipname1=shipname1.lower().strip()
-    shipname2=shipname2.lower().strip()
+    shipname1=shipname1.lower().replace('_', ' ').strip()
+    shipname2=shipname2.lower().replace('_', ' ').strip()
     author=str(interaction.user.id)
     try:
         db.remove_fight(shipname1, shipname2, author)
@@ -535,7 +535,7 @@ async def db_remove_fight(interaction: discord.Interaction, shipname1: str, ship
     
 @tree.command(name="db_get_matchups", description='gets the matchups of a ship from the database')
 async def db_get_matchups(interaction: discord.Interaction, shipname: str, playername: str=None):
-    shipname=shipname.lower().strip()
+    shipname=shipname.lower().replace('_', ' ').strip()
     try:
         await interaction.response.defer()
         wins, draws, losses=db.get_matchups(shipname, playername)
@@ -556,7 +556,7 @@ async def db_get_matchups(interaction: discord.Interaction, shipname: str, playe
 
 @tree.command(name="db_ship_meta_analysis", description='Analyses a ships place in the meta.')
 async def db_get_matchups(interaction: discord.Interaction, shipname: str):
-    shipname=shipname.lower().strip()
+    shipname=shipname.lower().replace('_', ' ').strip()
     try:
         await interaction.response.defer()
         text = "Name: " + shipname + "\n"
@@ -570,8 +570,8 @@ async def db_get_matchups(interaction: discord.Interaction, shipname: str):
     
 @tree.command(name="db_simulate_fight", description='simulates a fight between two ships')
 async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, shipname2: str):
-    shipname1=shipname1.lower().strip()
-    shipname2=shipname2.lower().strip()
+    shipname1=shipname1.lower().replace('_', ' ').strip()
+    shipname2=shipname2.lower().replace('_', ' ').strip()
     try:
         result=db.simulate_fight(shipname1, shipname2)
         people_win=result.get(fight_db.FIGHT_RESULT.WIN)
@@ -616,7 +616,7 @@ async def db_draw_archetype_tree(interaction: discord.Interaction):
     
 @tree.command(name="db_get_unknown_matchups", description='gets the unknown matchups of a ship from the database')
 async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: str, player_name: str=None):
-    shipname=shipname.lower().strip()
+    shipname=shipname.lower().replace('_', ' ').strip()
     try:
         await interaction.response.defer()
         ships=db.get_unknown_matchups(shipname, player_name)
@@ -653,9 +653,9 @@ async def db_export_db(interaction: discord.Interaction):
     
 @tree.command(name="db_rename_ship", description='renames a ship in the database')
 async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str=None, new_parent_name: str=None, new_description: str=None):
-    old_name=old_name.lower().strip()
+    old_name=old_name.lower().replace('_', ' ').strip()
     if new_name!=None:
-        new_name=new_name.lower().strip()
+        new_name=new_name.lower().replace('_', ' ').strip()
     try:
         backup = backup_file()
         author=str(interaction.user.id)
@@ -720,5 +720,5 @@ def backup_file(is_csv=False):
     # Create a file object for the CSV file
     return discord.File("fight_database.csv", filename="fight_database.csv")
 
-# #client.run(os.getenv("DISCORDBOTAPI"))
+# client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
