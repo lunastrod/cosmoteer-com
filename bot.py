@@ -66,6 +66,7 @@ async def com(
     flip_vectors: bool = False,
     draw_all_cot: bool = True,
     draw_all_com: bool = False,
+    cosmoship_api: bool = False,
 ):
     """
     Calculates the center of mass of a cosmoteer ship.png.
@@ -85,7 +86,7 @@ async def com(
         None
     """
     command = tree.get_command("full")
-    await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com)
+    await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com, cosmoship_api)
 
 
 @tree.command(name="cost", description="Calculates the cost analysis of a cosmoteer ship.png")
