@@ -2,6 +2,7 @@
 
 import base64
 import json
+import os
 import random
 import traceback
 from datetime import datetime as dt
@@ -9,18 +10,20 @@ from io import BytesIO
 
 import discord
 import requests
-import secret_token
 from discord import app_commands
+from dotenv import load_dotenv
 
 import data_analysis
 import fight_db
 import text_content
 
+load_dotenv()
+
+
 API_URL = "https://api.cosmoship.duckdns.org/"
 API_NEW = "https://cosmo-api-six.vercel.app/"
 
-BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-db = fight_db.FightDB(db_name=BOT_PATH + "test.db")
+db = fight_db.FightDB(db_name="test.db")
 
 
 intents = discord.Intents.default()
@@ -545,7 +548,7 @@ async def show_help(interaction: discord.Interaction, show_db_commands: bool = F
             await interaction.response.defer()
 
             # Send the help text along with the legend image as a file
-            await interaction.followup.send(HELP_TEXT, file=discord.File(BOT_PATH + "legend.png"))
+            await interaction.followup.send(HELP_TEXT, file=discord.File("legend.png"))
         except Exception as e:
             print(dt.now(), "Error:", e)
             await interaction.followup.send("Error:" + str(e))
@@ -1068,12 +1071,11 @@ def backup_file(is_csv=False):
     if not is_csv:
         db.export_db("fight_database.db")
         # Create a file object for the DB file
-        db_file = discord.File(BOT_PATH + "test.db", filename="fight_database.db")
+        db_file = discord.File("test.db", filename="fight_database.db")
         return db_file
     db.export_csv("fight_database.csv")
     # Create a file object for the CSV file
     return discord.File("fight_database.csv", filename="fight_database.csv")
 
 
-# client.run(os.getenv("DISCORDBOTAPI"))
-client.run(secret_token.token)
+client.run(os.getenv("TOKEN"))
