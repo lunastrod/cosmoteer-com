@@ -34,7 +34,7 @@ RUN find /venv -type d -name "__pycache__" -exec rm -r {} + && \
 
 # Use the build stage as the source for the virtual environment
 # FROM gcr.io/distroless/python3-debian11
-FROM al3xos/python-distroless:3.12-debian12
+FROM python:3-alpine
 
 # Copy the virtual environment from the build stage
 COPY --from=build /venv /venv
