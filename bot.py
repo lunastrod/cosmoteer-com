@@ -17,14 +17,6 @@ import data_analysis
 import fight_db
 import text_content
 
-import logging
-
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-
 load_dotenv()
 
 
@@ -1008,37 +1000,18 @@ async def db_scoreboard(
         await interaction.response.defer()
 
         ships = db.get_ships()
-    except Exception as e:
-        await interaction.followup.send(f"Error getting ships: {e}")
-        return
-
-    try:
         page_rank_dic = data_analysis.page_rank(data_analysis.get_fights_graph())
         sort_list = ["win", "draw", "loss", "matches", "page rank"]
-    except Exception as e:
-        await interaction.followup.send(f"Error getting page ranks: {e}")
-        return
-    try:
+
         if sort_by not in sort_list:
             raise ValueError("Can only sort by: " + str(sort_list))
 
         scoreboard = calculate_scoreboard(ships, page_rank_dic, player_name)
-    except Exception as e:
-        await interaction.followup.send(f"Error calculating scoreboard: {e}")
-        return
-
-    try:
         sorted_ships = sort_ships(ships, scoreboard, sort_by, sort_list)
-    except Exception as e:
-        await interaction.followup.send(f"Error sorting ships: {e}")
-        return
-    try:
+
         leading_message = f"Scoreboard ({sort_by.capitalize()})"
         table = format_scoreboard(sorted_ships, scoreboard, leading_message)
-    except Exception as e:
-        await interaction.followup.send(f"Error formatting scoreboard: {e}")
-        return
-    try:
+
         await send_long_message(interaction, table, use_code_blocks=True)
     except Exception as e:
         await interaction.followup.send(f"Error: {e}")
