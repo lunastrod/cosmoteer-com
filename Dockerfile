@@ -10,10 +10,4 @@ WORKDIR /app/cosmoteer-com
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN find /venv -type d -name "__pycache__" -exec rm -r {} + && \
-    find /venv -type f -name "*.pyc" -exec rm -r {} + && \
-    find /app -type d -name "__pycache__" -exec rm -r {} + && \
-    find /app -type f -name "*.pyc" -exec rm -r {} + && \
-    rm -rf /root/.cache/pip
-
 CMD ["python", "bot.py"]
