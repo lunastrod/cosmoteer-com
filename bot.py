@@ -1,86 +1,36 @@
-import discord
-from discord import app_commands
-import secret_token
-
-import fight_db
-import data_analysis
+"""Discord Bot for ship analysis"""
 
 import base64
-from io import BytesIO
-import requests
 import json
 import random
 import traceback
-
 from datetime import datetime as dt
+from io import BytesIO
 
+import discord
+import requests
+import secret_token
+from discord import app_commands
+
+import data_analysis
+import fight_db
+import text_content
 
 API_URL = "https://api.cosmoship.duckdns.org/"
 API_NEW = "https://cosmo-api-six.vercel.app/"
 
 BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-db = fight_db.FightDB(db_name=BOT_PATH+"test.db")
+db = fight_db.FightDB(db_name=BOT_PATH + "test.db")
 
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-short_version_text="Made by LunastroD, Aug 2023 - Sep 2023"
-version_text=short_version_text+", for the Excelsior discord server and the Cosmoteer community :3\n- Check out the source code at <https://github.com/lunastrod/cosmoteer-com>\n- Thanks to Poney, CoconutTrebuchet, Plaus and jun(0) for their help"
-help_text=version_text+"""
-/ping: responds with the bot's latency
+VERSION_TEXT = text_content.VERSION_TEXT
+HELP_TEXT = text_content.HELP_TEXT
+DB_HELP_TEXT = text_content.DB_HELP_TEXT
 
-/com: Calculates both the center of mass and the cost analysis of a cosmoteer ship.png
-parameters:
-- ship: the .ship.png file of the ship. Usually found in C:\\Users\\YOUR USERNAME\\Saved Games\\Cosmoteer\\YOUR STEAM ID\\Saved Ships
-- flipvectors: flips the thrust vectors to avoid overlap. Default: off
-- draw_all_cot: draws the center of thrust vectors on every direction instead of only fordwards. Default: on
-- draw_all_com: draws the center of mass of each part. Default: off
-
-/compare: Compare two ships submitted to "cosmoteer ship library" <https://cosmo-lilac.vercel.app/>
-parameters:
-- ship1: contains the first ship id. Ship ids are usually found in the website url when selected
-- ship2: contains the second ship id.
-
-common questions:
-the bot considers the lateral thrust of each thruster
-the bot doesn't work with modded parts
-"""
-
-db_help_text = f""+version_text+"""
-
-The Cosmoteer Design Tools bot has a database of every known multiplayer elimination archetype and their matchups that can be contributed to by anybody.
-Below is a list of commands that are used to access and contribute to the database.
-
-**/help:** Shows this message.
-
-**/db_list_ships:** Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
-
-**/db_draw_archetype_tree:** Draws the family tree of archetypes.
-
-**/db_add_ship:** Adds a new ship to the database. Also generates a backup before execution.
-
-**/db_rename_ship:** Changes the existing name, parents name or description of a ship to a different specified one. Also generates a backup before execution. Only LunastroD or Plaus can use this command.
-
-**/db_ship_meta_analysis:** Shows ship specific values and stats. 
-
-**/db_scoreboard:** Shows the win/loss/draw ratio for each ship in the database based on matchups. The optional "playername" parameter can be used to only show the scoreboard for a certain player.
-
-**/db_get_matchups:** Lists each matchup (win, loss, draw) of a specified ship from the database. The optional "playername" parameter can be used to only show the matchups a certain player submitted. 
-
-**/db_get_unknown_matchups:** Lists each matchup that has no votes from a specified ship from the database. The optional "playername" parameter can be used to only show the unknown matchups for a certain player.
-
-**/db_add_fight:** Add a new matchup between 2 or more specified ships in the database. Using a ship category instead of a ship adds all fights of ships under that category. To add multiple fights for one ship/category use the second parameter and separate ships with a comma but no space.
-
-**/db_remove_fight:** Removes a matchup between 2 specified ship in the database.
-
-**/db_simulate_fight:** Simulates a fight between 2 specified ship, based on the listed matchup in the database.
-
-**/db_export_csv:** Exports the entire database to a .csv file.
-
-**/db_add_all_draws: Add all draws of the same ships facing each other to the database.**
-"""
 
 @client.event
 async def on_ready():
@@ -89,42 +39,117 @@ async def on_ready():
     """
     # Set the bot's presence to the specified game
     await client.change_presence(activity=discord.Game(name="Cosmoteer (/help)"))
-    
+
     # Print a message indicating that the slash commands are being synced
-    print(dt.now(),"Syncing slash commands")
-    
+    print(dt.now(), "Syncing slash commands")
+
     # Sync the slash commands with the Discord API
     await tree.sync()
-    
+
     # Print a list of guilds that the bot is connected to
     print("Guilds:")
     for guild in client.guilds:
         print("\t- " + guild.name, guild.id)
-    
+
     # Print a message indicating that the bot is ready
-    print(dt.now(),"Bot is ready")
+    print(dt.now(), "Bot is ready")
 
 
 @tree.command(name="com", description="Calculates the center of mass of a cosmoteer ship.png")
-async def com(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False):
-    command = tree.get_command('full')
+async def com(
+    interaction: discord.Interaction,
+    ship: discord.Attachment,
+    boost: bool = True,
+    flip_vectors: bool = False,
+    draw_all_cot: bool = True,
+    draw_all_com: bool = False,
+):
+    """
+    Calculates the center of mass of a cosmoteer ship.png.
+
+    Args:
+    interaction (discord.Interaction): The interaction object representing the command invocation.
+    ship (discord.Attachment): The attachment object representing the ship.png file.
+    boost (bool, optional): Flag indicating whether to enable boosters. Defaults to True.
+    flip_vectors (bool, optional): Flag indicating whether to flip the thrust vectors.
+        Defaults to False.
+    draw_all_cot (bool, optional): Flag indicating whether to draw the center of thrust vectors
+        on every direction. Defaults to True.
+    draw_all_com (bool, optional): Flag indicating whether to draw the center of mass of each part.
+        Defaults to False.
+
+    Returns:
+        None
+    """
+    command = tree.get_command("full")
     await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com)
 
 
 @tree.command(name="cost", description="Calculates the cost analysis of a cosmoteer ship.png")
-async def cost(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False):
-    command = tree.get_command('full')
+async def cost(
+    interaction: discord.Interaction,
+    ship: discord.Attachment,
+    boost: bool = True,
+    flip_vectors: bool = False,
+    draw_all_cot: bool = True,
+    draw_all_com: bool = False,
+):
+    """
+    Calculates the cost analysis of a cosmoteer ship.png.
+
+    Args:
+        interaction (discord.Interaction): The interaction object representing
+            the command invocation.
+        ship (discord.Attachment): The attachment object representing the ship.png file.
+        boost (bool, optional): Flag indicating whether to enable boosters. Defaults to True.
+        flip_vectors (bool, optional): Flag indicating whether to flip the thrust vectors.
+            Defaults to False.
+        draw_all_cot (bool, optional): Flag indicating whether to draw the center of thrust
+            vectors on every direction. Defaults to True.
+        draw_all_com (bool, optional): Flag indicating whether to draw the center of mass of
+            each part. Defaults to False.
+
+    Returns:
+        None
+    """
+    command = tree.get_command("full")
     await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com)
 
 
-@tree.command(name="full", description="Calculates the center of mass and cost analysis of a cosmoteer ship.png")
-async def full(interaction: discord.Interaction, ship: discord.Attachment, boost: bool = True, flip_vectors: bool = False, draw_all_cot: bool = True, draw_all_com: bool = False):
-    print(dt.now(),"received command")
+@tree.command(
+    name="full",
+    description="Calculates the center of mass and cost analysis of a cosmoteer ship.png",
+)
+async def full(
+    interaction: discord.Interaction,
+    ship: discord.Attachment,
+    boost: bool = True,
+    flip_vectors: bool = False,
+    draw_all_cot: bool = True,
+    draw_all_com: bool = False,
+):
+    """
+    Calculates the center of mass and cost analysis of a cosmoteer ship.png.
+
+    Args:
+        interaction (discord.Interaction): The interaction object representing
+            the command invocation.
+        ship (discord.Attachment): The attachment object representing the ship.png file.
+        boost (bool, optional): Flag indicating whether to enable boosters. Defaults to True.
+        flip_vectors (bool, optional): Flag indicating whether to flip the thrust vectors.
+            Defaults to False.
+        draw_all_cot (bool, optional): Flag indicating whether to draw the center of thrust
+            vectors on every direction. Defaults to True.
+        draw_all_com (bool, optional): Flag indicating whether to draw the center of mass of
+            each part. Defaults to False.
+    """
+
+    print(dt.now(), "received command")
     await interaction.response.defer()
-    print(dt.now(),"deferred")
+    print(dt.now(), "deferred")
     # Read the image bytes and encode them to base64
     image_bytes = await ship.read()
-    base64_string = base64.b64encode(image_bytes).decode('utf-8')
+    base64_string = base64.b64encode(image_bytes).decode("utf-8")
     # Create a file object for the original image
     ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
     try:
@@ -137,34 +162,35 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
             "draw_com": True,
             "draw": True,
             "flip_vectors": flip_vectors,
-            "analyze" : True
+            "analyze": True,
         }
-        json_data = json.dumps({'image': base64_string, 'args': args})
+        json_data = json.dumps({"image": base64_string, "args": args})
         # Send the request to the server
-        print(dt.now(),"requesting data")
+        print(dt.now(), "requesting data")
         # try API_NEW and if it fails, try API_URL
         try:
             url = API_NEW + "analyze"
-            response = requests.post(url, json=json_data)
+            response = requests.post(url, json=json_data, timeout=30)
             response.raise_for_status()
-        except:
+        except Exception as e:
+            print(f"error fetching data, switching to old API {dt.now()} Exception: {e}")
             url = API_URL + "analyze"
-            response = requests.post(url, json=json_data)
+            response = requests.post(url, json=json_data, timeout=30)
             response.raise_for_status()
-        print(dt.now(),"server responded")
+        print(dt.now(), "server responded")
         # Get the response
         data_returned = response.json()
 
         # Get the URL of the center of mass image
-        url_com = data_returned['url_com']
+        url_com = data_returned["url_com"]
         # prepare the data
-        center_of_mass_x = round(data_returned['center_of_mass_x'], 2)
-        center_of_mass_y = round(data_returned['center_of_mass_y'], 2)
-        total_mass = round(data_returned['total_mass'], 2)
-        top_speed = round(data_returned['top_speed'], 2)
-        crew = data_returned['crew']
-        price = data_returned['price']
-        made_by = data_returned['author']
+        center_of_mass_x = round(data_returned["center_of_mass_x"], 2)
+        center_of_mass_y = round(data_returned["center_of_mass_y"], 2)
+        total_mass = round(data_returned["total_mass"], 2)
+        top_speed = round(data_returned["top_speed"], 2)
+        crew = data_returned["crew"]
+        price = data_returned["price"]
+        made_by = data_returned["author"]
         # convert the data
         data_converted = {
             "Center of mass": f"{center_of_mass_x}, {center_of_mass_y}",
@@ -174,18 +200,15 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
             "Aprox cost": price,
             "Made by": made_by,
         }
-        
+
         text = "use the /help command for more info\n"
 
         categoriescom = ["Center of mass", "Total mass", "Max speed", "Total crew", "Aprox cost"]
-        if(data_returned['author']!=""):
+        if data_returned["author"] != "":
             categoriescom += ["Made by"]
-        embedcom = discord.Embed(
-            title="Center of mass analysis",
-            color=discord.Color.green()
-        )
+        embedcom = discord.Embed(title="Center of mass analysis", color=discord.Color.green())
         # Create a formatted table header with consistent column widths
-        table_headercom =  "Category        | Data         \n"
+        table_headercom = "Category        | Data         \n"
         table_headercom += "----------------|--------------\n"
         # Create a formatted table body with each category's data
         table_bodycom = ""
@@ -198,21 +221,37 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         # Combine the header and body to form the table
         tablecom = f"```\n{table_headercom}{table_bodycom}```"
         # Add the table to the Discord embed
-        embedcom.add_field(name="\u200b", value=tablecom, inline=False)  # "\u200b" is a zero-width space for better formatting
-        
+        embedcom.add_field(
+            name="\u200b", value=tablecom, inline=False
+        )  # "\u200b" is a zero-width space for better formatting
+
         url_stats = data_returned["analysis"]["url_analysis"]
         analysis = data_returned["analysis"]
-        categories = ["total_price", "price_crew", "price_armor", "price_weapons", "price_mouvement", 
-                        "price_shield", "price_storage", "price_utility", "price_power"]
-        text_categories={"total_price":"total", "price_crew":"crew", "price_armor":"armor",
-                         "price_weapons":"weapons", "price_mouvement":"thrust", "price_shield":"shield",
-                         "price_storage":"storage", "price_utility":"misc", "price_power":"power"}
-        embed = discord.Embed(
-            title="Price analysis",
-            color=discord.Color.green()
-        )
+        categories = [
+            "total_price",
+            "price_crew",
+            "price_armor",
+            "price_weapons",
+            "price_mouvement",
+            "price_shield",
+            "price_storage",
+            "price_utility",
+            "price_power",
+        ]
+        text_categories = {
+            "total_price": "total",
+            "price_crew": "crew",
+            "price_armor": "armor",
+            "price_weapons": "weapons",
+            "price_mouvement": "thrust",
+            "price_shield": "shield",
+            "price_storage": "storage",
+            "price_utility": "misc",
+            "price_power": "power",
+        }
+        embed = discord.Embed(title="Price analysis", color=discord.Color.green())
         # Create a formatted table header with consistent column widths
-        table_header =  "Category  | Percent | Price\n"
+        table_header = "Category  | Percent | Price\n"
         table_header += "----------|---------|----------\n"
         # Create a formatted table body with each category's data
         table_body = ""
@@ -227,7 +266,9 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         # Combine the header and body to form the table
         table = f"```\n{table_header}{table_body}```"
         # Add the table to the Discord embed
-        embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
+        embed.add_field(
+            name="\u200b", value=table, inline=False
+        )  # "\u200b" is a zero-width space for better formatting
         print(dt.now(), "sending to Discord")
         # Create an Embed for the Center of Mass image
         embedcom.set_image(url=url_com)
@@ -237,116 +278,250 @@ async def full(interaction: discord.Interaction, ship: discord.Attachment, boost
         await interaction.followup.send(text, embeds=embeds, files=[ship])
         print(dt.now(), "sent to Discord")
     except Exception as e:
-        print(dt.now(),"error",e)
-        if("data_returned" in locals()):#if the data was returned
-            text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e) + str(data_returned)
+        print(dt.now(), "error", e)
+        if "data_returned" in locals():  # if the data was returned
+            text = (
+                "Error: could not process ship :\n\t"
+                + type(e).__name__
+                + ":"
+                + str(e)
+                + str(data_returned)
+            )
         else:
-            text = "Error: could not process ship :\n\t" + type(e).__name__ + ":" + str(e) + "server did not respond"
+            text = (
+                "Error: could not process ship :\n\t"
+                + type(e).__name__
+                + ":"
+                + str(e)
+                + "server did not respond"
+            )
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
 
+
+# @tree.command(name="compare", description="Compares two ships (id1 and id2)")
+# async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scale: bool = False):
+#     """Compares two ships (id1 and id2)"""
+#     print(dt.now(), "received command")
+#     await interaction.response.defer()
+#     print(dt.now(), "deferred")
+#     print(dt.now(), "requesting data")
+#     # try API_NEW and if it fails, try API_URL
+#     try:
+#         url = (
+#             API_NEW
+#             + "compare?ship1="
+#             + str(ship1)
+#             + "&ship2="
+#             + str(ship2)
+#             + "&scale="
+#             + str(scale)
+#         )
+#         response = requests.get(url)
+#         response.raise_for_status()
+#     except:
+#         url = (
+#             API_URL
+#             + "compare?ship1="
+#             + str(ship1)
+#             + "&ship2="
+#             + str(ship2)
+#             + "&scale="
+#             + str(scale)
+#         )
+#         response = requests.get(url)
+#         response.raise_for_status()
+#     print(dt.now(), "server responded")
+#     # Get the response
+#     data_returned = response.json()
+
+#     # ship 1 url and name
+#     urlship1 = data_returned["urlship1"]
+#     shipname1 = data_returned["shipname1"]
+#     embed1 = discord.Embed(
+#         title="Ship1 : " + str(shipname1),
+#         url="https://cosmo-lilac.vercel.app/ship/" + str(ship1),
+#         color=discord.Color.green(),
+#     )
+#     embed1.set_image(url=urlship1)
+#     # ship 2 url and name
+#     urlship2 = data_returned["urlship2"]
+#     shipname2 = data_returned["shipname2"]
+#     embed2 = discord.Embed(
+#         title="Ship2 : " + str(shipname2),
+#         url="https://cosmo-lilac.vercel.app/ship/" + str(ship2),
+#         color=discord.Color.green(),
+#     )
+#     embed2.set_image(url=urlship2)
+
+#     # Get the URL of the chart
+#     url_stats = data_returned["url_analysis"]
+#     analysis = data_returned
+#     embed = discord.Embed(
+#         title="Price analysis for ships " + str(ship1) + " and " + str(ship2),
+#         color=discord.Color.green(),
+#     )
+#     # Create a formatted table header with consistent column widths
+#     table_header = "Category | Ship1(%)| Ship2(%)\n"
+#     table_header += "---------|---------|----------\n"
+#     # Create a formatted table body with each category's data
+#     table_body = ""
+#     total1 = f"{analysis['total_price1']['percent']*100:.2f}%"
+#     total2 = f"{analysis['total_price2']['percent']*100:.2f}%"
+#     table_body += f"total    | {total1:>7} | {total2:>7}\n"
+#     price_crew1 = f"{analysis['price_crew1']['percent']*100:.2f}%"
+#     price_crew2 = f"{analysis['price_crew2']['percent']*100:.2f}%"
+#     table_body += f"crew     | {price_crew1:>7} | {price_crew2}\n"
+#     price_armor1 = f"{analysis['price_armor1']['percent']*100:.2f}%"
+#     price_armor2 = f"{analysis['price_armor2']['percent']*100:.2f}%"
+#     table_body += f"armor    | {price_armor1:>7} | {price_armor2:>7}\n"
+#     price_weapons1 = f"{analysis['price_weapons1']['percent']*100:.2f}%"
+#     price_weapons2 = f"{analysis['price_weapons2']['percent']*100:.2f}%"
+#     table_body += f"weapons  | {price_weapons1:>7} | {price_weapons2:>7}\n"
+#     price_mouvement1 = f"{analysis['price_mouvement1']['percent']*100:.2f}%"
+#     price_mouvement2 = f"{analysis['price_mouvement2']['percent']*100:.2f}%"
+#     table_body += f"thrust   | {price_mouvement1:>7} | {price_mouvement2:>7}\n"
+#     price_shield1 = f"{analysis['price_shield1']['percent']*100:.2f}%"
+#     price_shield2 = f"{analysis['price_shield2']['percent']*100:.2f}%"
+#     table_body += f"shield   | {price_shield1:>7} | {price_shield2:>7}\n"
+#     price_storage1 = f"{analysis['price_storage1']['percent']*100:.2f}%"
+#     price_storage2 = f"{analysis['price_storage2']['percent']*100:.2f}%"
+#     table_body += f"storage  | {price_storage1:>7} | {price_storage2:>7}\n"
+#     price_utility1 = f"{analysis['price_utility1']['percent']*100:.2f}%"
+#     price_utility2 = f"{analysis['price_utility2']['percent']*100:.2f}%"
+#     table_body += f"misc     | {price_utility1:>7} | {price_utility2:>7}\n"
+#     price_power1 = f"{analysis['price_power1']['percent']*100:.2f}%"
+#     price_power2 = f"{analysis['price_power2']['percent']*100:.2f}%"
+#     table_body += f"power    | {price_power1:>7} | {price_power2:>7}\n"
+
+#     # Combine the header and body to form the table
+#     table = f"```\n{table_header}{table_body}```"
+#     # Add the table to the Discord embed
+#     embed.add_field(
+#         name="\u200b", value=table, inline=False
+#     )  # "\u200b" is a zero-width space for better formatting
+#     print(dt.now(), "sending to Discord")
+#     # Create an Embed for the Stats image
+#     embed.set_image(url=url_stats)
+#     embeds = [embed1, embed2, embed]
+#     await interaction.followup.send(embeds=embeds)
+#     print(dt.now(), "sent to Discord")
+
+
+# refactor compare command
 @tree.command(name="compare", description="Compares two ships (id1 and id2)")
 async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scale: bool = False):
-    print(dt.now(),"received command")
-    await interaction.response.defer()
-    print(dt.now(),"deferred")
-    print(dt.now(),"requesting data")
-    # try API_NEW and if it fails, try API_URL
+    """Compares two ships (id1 and id2)"""
     try:
-        url = API_NEW + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
-        response = requests.get(url)
-        response.raise_for_status()
-    except:
-        url = API_URL + 'compare?ship1=' + str(ship1) + '&ship2=' + str(ship2) + '&scale=' + str(scale)
-        response = requests.get(url)
-        response.raise_for_status()
-    print(dt.now(),"server responded")
-    # Get the response
-    data_returned = response.json()
+        print(dt.now(), "received command")
+        await interaction.response.defer()
+        print(dt.now(), "deferred")
 
-    # ship 1 url and name
-    urlship1 = data_returned["urlship1"]
-    shipname1 = data_returned["shipname1"]
-    embed1 = discord.Embed(
-        title="Ship1 : " + str(shipname1),
-        url="https://cosmo-lilac.vercel.app/ship/"+str(ship1),
-        color=discord.Color.green()
-    )
-    embed1.set_image(url=urlship1)
-    # ship 2 url and name
-    urlship2 = data_returned["urlship2"]
-    shipname2 = data_returned["shipname2"]
-    embed2 = discord.Embed(
-        title="Ship2 : " + str(shipname2),
-        url="https://cosmo-lilac.vercel.app/ship/"+str(ship2),
-        color=discord.Color.green()
-    )
-    embed2.set_image(url=urlship2)
- 
-    # Get the URL of the chart
-    url_stats = data_returned["url_analysis"]
-    analysis = data_returned
+        response = await fetch_comparison_data(ship1, ship2, scale)
+        data_returned = response.json()
+
+        embed1 = create_ship_embed(data_returned, ship1, "ship1")
+        embed2 = create_ship_embed(data_returned, ship2, "ship2")
+
+        embed = create_comparison_embed(data_returned, ship1, ship2)
+
+        embeds = [embed1, embed2, embed]
+        await interaction.followup.send(embeds=embeds)
+        print(dt.now(), "sent to Discord")
+    except Exception as e:
+        await interaction.followup.send(f"Error: {e}")
+        return
+
+
+async def fetch_comparison_data(ship1, ship2, scale):
+    """Fetches comparison data from the API."""
+    print(dt.now(), "requesting data")
+    url = f"{API_NEW}compare?ship1={ship1}&ship2={ship2}&scale={scale}"
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"error fetching data, switching to old API {dt.now()} Exception: {e}")
+        url = f"{API_URL}compare?ship1={ship1}&ship2={ship2}&scale={scale}"
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+    print(dt.now(), "server responded")
+    return response
+
+
+def create_ship_embed(data, ship_id, ship_key):
+    """Creates a Discord embed for a ship."""
+    ship_url = data[f"url{ship_key}"]
+    ship_name = data[f"shipname{ship_key[-1]}"]
     embed = discord.Embed(
-        title="Price analysis for ships " + str(ship1) + " and " + str(ship2),
-        color=discord.Color.green()
+        title=f"Ship{ship_key[-1]} : {ship_name}",
+        url=f"https://cosmo-lilac.vercel.app/ship/{ship_id}",
+        color=discord.Color.green(),
     )
-    # Create a formatted table header with consistent column widths
-    table_header =  "Category | Ship1(%)| Ship2(%)\n"
-    table_header += "---------|---------|----------\n"
-    # Create a formatted table body with each category's data
-    table_body = ""
-    total1 = f"{analysis['total_price1']['percent']*100:.2f}%"
-    total2 = f"{analysis['total_price2']['percent']*100:.2f}%"
-    table_body += f"total    | {total1:>7} | {total2:>7}\n"
-    price_crew1 = f"{analysis['price_crew1']['percent']*100:.2f}%"
-    price_crew2 = f"{analysis['price_crew2']['percent']*100:.2f}%"
-    table_body += f"crew     | {price_crew1:>7} | {price_crew2}\n"
-    price_armor1 = f"{analysis['price_armor1']['percent']*100:.2f}%"
-    price_armor2 = f"{analysis['price_armor2']['percent']*100:.2f}%"
-    table_body += f"armor    | {price_armor1:>7} | {price_armor2:>7}\n"
-    price_weapons1 = f"{analysis['price_weapons1']['percent']*100:.2f}%"
-    price_weapons2 = f"{analysis['price_weapons2']['percent']*100:.2f}%"
-    table_body += f"weapons  | {price_weapons1:>7} | {price_weapons2:>7}\n"
-    price_mouvement1 = f"{analysis['price_mouvement1']['percent']*100:.2f}%"
-    price_mouvement2 = f"{analysis['price_mouvement2']['percent']*100:.2f}%"
-    table_body += f"thrust   | {price_mouvement1:>7} | {price_mouvement2:>7}\n"
-    price_shield1 = f"{analysis['price_shield1']['percent']*100:.2f}%"
-    price_shield2 = f"{analysis['price_shield2']['percent']*100:.2f}%"
-    table_body += f"shield   | {price_shield1:>7} | {price_shield2:>7}\n"
-    price_storage1 = f"{analysis['price_storage1']['percent']*100:.2f}%"
-    price_storage2 = f"{analysis['price_storage2']['percent']*100:.2f}%"
-    table_body += f"storage  | {price_storage1:>7} | {price_storage2:>7}\n"
-    price_utility1 = f"{analysis['price_utility1']['percent']*100:.2f}%"
-    price_utility2 = f"{analysis['price_utility2']['percent']*100:.2f}%"
-    table_body += f"misc     | {price_utility1:>7} | {price_utility2:>7}\n"
-    price_power1 = f"{analysis['price_power1']['percent']*100:.2f}%"
-    price_power2 = f"{analysis['price_power2']['percent']*100:.2f}%"
-    table_body += f"power    | {price_power1:>7} | {price_power2:>7}\n"
-    
-    # Combine the header and body to form the table
-    table = f"```\n{table_header}{table_body}```"
-    # Add the table to the Discord embed
-    embed.add_field(name="\u200b", value=table, inline=False)  # "\u200b" is a zero-width space for better formatting
-    print(dt.now(), "sending to Discord")
-    # Create an Embed for the Stats image
+    embed.set_image(url=ship_url)
+    return embed
+
+
+def create_comparison_embed(data, ship1, ship2):
+    """Creates a Discord embed for the comparison table."""
+    url_stats = data["url_analysis"]
+    embed = discord.Embed(
+        title=f"Price analysis for ships {ship1} and {ship2}",
+        color=discord.Color.green(),
+    )
+
+    table = create_comparison_table(data)
+    embed.add_field(name="\u200b", value=table, inline=False)
     embed.set_image(url=url_stats)
-    embeds = [embed1, embed2, embed]
-    await interaction.followup.send(embeds=embeds)
-    print(dt.now(), "sent to Discord")
+    return embed
+
+
+def create_comparison_table(data):
+    """Creates a formatted comparison table."""
+    table_header = "Category | Ship1(%)| Ship2(%)\n---------|---------|----------\n"
+    table_body = "\n".join(
+        [
+            f"total    | {data['total_price1']['percent']*100:7.2f}% | {data['total_price2']['percent']*100:7.2f}%",
+            f"crew     | {data['price_crew1']['percent']*100:7.2f}% | {data['price_crew2']['percent']*100:7.2f}%",
+            f"armor    | {data['price_armor1']['percent']*100:7.2f}% | {data['price_armor2']['percent']*100:7.2f}%",
+            f"weapons  | {data['price_weapons1']['percent']*100:7.2f}% | {data['price_weapons2']['percent']*100:7.2f}%",
+            f"thrust   | {data['price_mouvement1']['percent']*100:7.2f}% | {data['price_mouvement2']['percent']*100:7.2f}%",
+            f"shield   | {data['price_shield1']['percent']*100:7.2f}% | {data['price_shield2']['percent']*100:7.2f}%",
+            f"storage  | {data['price_storage1']['percent']*100:7.2f}% | {data['price_storage2']['percent']*100:7.2f}%",
+            f"misc     | {data['price_utility1']['percent']*100:7.2f}% | {data['price_utility2']['percent']*100:7.2f}%",
+            f"power    | {data['price_power1']['percent']*100:7.2f}% | {data['price_power2']['percent']*100:7.2f}%",
+        ]
+    )
+    return f"```\n{table_header}{table_body}```"
+
 
 @tree.command(name="ping", description="responds with the bot's latency")
 async def ping(interaction: discord.Interaction):
-    await interaction.response.send_message('Pong! {0}ms'.format(round(client.latency*1000)))
+    """
+    Responds to a ping command and sends the bot's latency in milliseconds.
+
+    Parameters:
+        interaction (discord.Interaction): The interaction triggered by the user.
+
+    Returns:
+        None
+    """
+    await interaction.response.send_message(f"Pong! {round(client.latency * 1000)}ms")
+
 
 @tree.command(name="hmmm", description="responds with hmmm")
-async def ping(interaction: discord.Interaction):
-    if(random.random()<0.05):
-        await interaction.response.send_message("oh no, not again, please no, not the hmmm, anything but the hmmm, please")
+async def hmmm(interaction: discord.Interaction):
+    """a little fun"""
+    if random.random() < 0.05:
+        await interaction.response.send_message(
+            "oh no, not again, please no, not the hmmm, anything but the hmmm, please"
+        )
     else:
         await interaction.response.send_message("hmmm")
 
+
 @tree.command(name="help", description="shows the list of commands")
-async def help(interaction: discord.Interaction, show_db_commands: bool = False):
+async def show_help(interaction: discord.Interaction, show_db_commands: bool = False):
     """
     Responds to a help command and sends a list of commands.
 
@@ -356,51 +531,78 @@ async def help(interaction: discord.Interaction, show_db_commands: bool = False)
     Returns:
         None
     """
-    if show_db_commands == False:
-        print(dt.now(),"help command received")
+    if not show_db_commands:
+        print(dt.now(), "help command received")
         # Defer the initial response to prevent timeouts
         try:
             await interaction.response.defer()
-            
+
             # Send the help text along with the legend image as a file
-            await interaction.followup.send(help_text, file=discord.File(BOT_PATH+"legend.png"))
+            await interaction.followup.send(HELP_TEXT, file=discord.File(BOT_PATH + "legend.png"))
         except Exception as e:
-            print(dt.now(),"Error:",e)
-            await interaction.followup.send("Error:"+str(e))
+            print(dt.now(), "Error:", e)
+            await interaction.followup.send("Error:" + str(e))
     else:
         await interaction.response.defer()
-        await send_long_message(interaction, db_help_text)
+        await send_long_message(interaction, DB_HELP_TEXT)
 
-@tree.command(name="elim_rps", description='play rock-paper-scissors, but with elimination archtypes!')
+
+@tree.command(
+    name="elim_rps", description="play rock-paper-scissors, but with elimination archtypes!"
+)
 async def rps(interaction: discord.Interaction, player_pick: str):
-    ships={"cannon wall":{"wins":["avoider"]},
-           "avoider"    :{"wins":["dc spinner"]},
-           "dc spinner" :{"wins":["cannon wall"]}
+    """rock-paper-scissors"""
+    ships = {
+        "cannon wall": {"wins": ["avoider"]},
+        "avoider": {"wins": ["dc spinner"]},
+        "dc spinner": {"wins": ["cannon wall"]},
     }
 
-    player_pick=player_pick.lower().strip()
+    player_pick = player_pick.lower().strip()
     computer_pick = random.choice(list(ships.keys()))
 
-    if(player_pick not in ships):
-        await interaction.response.send_message(f"Error:{player_pick} You need to pick between "+', '.join(list(ships.keys())))
+    if player_pick not in ships:
+        await interaction.response.send_message(
+            f"Error:{player_pick} You need to pick between " + ", ".join(list(ships.keys()))
+        )
         return
-    player_win=False
-    computer_win=False
-    if(computer_pick in ships[player_pick]["wins"]):
-        player_win=True
-    elif(player_pick in ships[computer_pick]["wins"]):
-        computer_win=True
+    player_win = False
+    computer_win = False
+    if computer_pick in ships[player_pick]["wins"]:
+        player_win = True
+    elif player_pick in ships[computer_pick]["wins"]:
+        computer_win = True
 
-
-    if player_win == True: # Display results to user
-        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; {interaction.user.display_name} wins!")
+    if player_win:  # Display results to user
+        message = (
+            f"{interaction.user.display_name} picked `{player_pick}` and "
+            f"Cosmoteer Design Tools picked `{computer_pick}`; "
+            f"{interaction.user.display_name} wins!"
+        )
+        await interaction.response.send_message(message)
     elif computer_win:
-        await interaction.response.send_message(f"{interaction.user.display_name} picked `{player_pick}` and Cosmoteer Design Tools picked `{computer_pick}`; Cosmoteer Design Tools wins!")
+        message = (
+            f"{interaction.user.display_name} picked `{player_pick}` and "
+            f"Cosmoteer Design Tools picked `{computer_pick}`; "
+            f"Cosmoteer Design Tools wins!"
+        )
+        await interaction.response.send_message(message)
     else:
-        await interaction.response.send_message(f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; it is a draw!")
+        message = (
+            f"{interaction.user.display_name} and Cosmoteer Design Tools picked `{player_pick}`; "
+            f"it is a draw!"
+        )
+        await interaction.response.send_message(message)
+
 
 # Function to split and send long messages at newline characters
-async def send_long_message(interaction: discord.Interaction, text: str, chunk_size: int = 1800, use_code_blocks: bool = False):
+async def send_long_message(
+    interaction: discord.Interaction,
+    text: str,
+    chunk_size: int = 1800,
+    use_code_blocks: bool = False,
+):
+    """help to send long messages"""
     start = 0
     while start < len(text):
         end = start + chunk_size
@@ -408,12 +610,12 @@ async def send_long_message(interaction: discord.Interaction, text: str, chunk_s
             chunk = text[start:]
         else:
             # Find the last newline character within the chunk
-            newline_index = text.rfind('\n', start, end)
+            newline_index = text.rfind("\n", start, end)
             if newline_index == -1:
                 newline_index = end
             chunk = text[start:newline_index]
             start = newline_index + 1
-        
+
         if use_code_blocks:
             chunk = f"```\n{chunk}\n```"
 
@@ -425,27 +627,40 @@ async def send_long_message(interaction: discord.Interaction, text: str, chunk_s
         if end >= len(text):
             break
 
-@tree.command(name="db_add_fight", description='adds a new fight to the database')
-async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipname2: str, result: str):
-    shipname1=shipname1.lower().strip().replace('_', ' ')
-    shipname2 = shipname2.lower().strip().replace('_', ' ')
-    result = result.lower().strip().replace('_', ' ')
+
+@tree.command(name="db_add_fight", description="adds a new fight to the database")
+async def db_add_fight(
+    interaction: discord.Interaction, shipname1: str, shipname2: str, result: str
+):
+    """
+    Adds a new fight to the database.
+
+    Args:
+        interaction (discord.Interaction): The interaction object.
+        shipname1 (str): The name of the first ship.
+        shipname2 (str): The name of the second ship.
+        result (str): The result of the fight.
+
+    Returns:
+        None
+    """
+    shipname1 = shipname1.lower().strip().replace("_", " ")
+    shipname2 = shipname2.lower().strip().replace("_", " ")
+    result = result.lower().strip().replace("_", " ")
     switched_ship_names = False
     not_a_draw = True
 
-    if result=="draw" or result=="d":
-        result=fight_db.FIGHT_RESULT.DRAW
+    if result in {"draw", "d"}:
+        result = fight_db.FIGHT_RESULT.DRAW
         not_a_draw = False
-    elif result=="win" or result=="w":
-        result=fight_db.FIGHT_RESULT.WIN
-    elif result=="lose" or result=="l":
-        result=fight_db.FIGHT_RESULT.WIN
-        temp=shipname1
-        shipname1=shipname2
-        shipname2=temp
+    elif result in {"win", "w"}:
+        result = fight_db.FIGHT_RESULT.WIN
+    elif result in {"lose", "l"}:
+        result = fight_db.FIGHT_RESULT.WIN
+        shipname1, shipname2 = shipname2, shipname1  # switch ship names
         switched_ship_names = True
     else:
-        await interaction.response.send_message(f"Error: result must be 'win', 'lose' or 'draw'")
+        await interaction.response.send_message("Error: result must be 'win', 'lose' or 'draw'")
         return
 
     author = str(interaction.user.id)
@@ -455,108 +670,121 @@ async def db_add_fight(interaction: discord.Interaction, shipname1: str, shipnam
         if not switched_ship_names:
             for ship_name in shipname2.split(","):
                 if not_a_draw and ship_name == shipname1:
-                    await interaction.response.send_message(f"Can not add a non draw result for 2 ships of the same type.")
+                    await interaction.response.send_message(
+                        "Can not add a non draw result for 2 ships of the same type."
+                    )
                     return
-                else:
-                    db.insert_fight(shipname1, ship_name, author, author_name, result)
+                # else: no need for an else since there is a return
+                db.insert_fight(shipname1, ship_name, author, author_name, result)
         else:
             for ship_name in shipname1.split(","):
                 if not_a_draw and ship_name == shipname2:
-                    await interaction.response.send_message(f"Can not add a non draw result for 2 ships of the same type.")
+                    await interaction.response.send_message(
+                        "Can not add a non draw result for 2 ships of the same type."
+                    )
                     return
-                else:
-                    db.insert_fight(ship_name, shipname2, author, author_name, result)
+                # else: no need for an else since there is a return
+                db.insert_fight(ship_name, shipname2, author, author_name, result)
 
-        winner_text=""
-        if result==fight_db.FIGHT_RESULT.WIN:
-            winner_text="the winner is "+shipname1
-        elif result==fight_db.FIGHT_RESULT.DRAW:
-            winner_text="it is a draw"
-        await interaction.response.send_message(f"In a fight between {shipname1} and {shipname2}, {winner_text}, according to {author_name}")
+        winner_text = ""
+        if result == fight_db.FIGHT_RESULT.WIN:
+            winner_text = "the winner is " + shipname1
+        elif result == fight_db.FIGHT_RESULT.DRAW:
+            winner_text = "it is a draw"
+        await interaction.response.send_message(
+            f"In a fight between {shipname1} and {shipname2}, "
+            f"{winner_text}, according to {author_name}"
+        )
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
-"""
-@tree.command(name="db_add_all_draws", description='adds a new ship to the database')
-async def db_add_all_draws(interaction: discord.Interaction):
-    author = str(interaction.user.id)
-    author_name = interaction.user.display_name
-    try:
-        for ship in db.get_ships():
-            db.insert_fight(ship, ship, author, author_name, 0)
-        await interaction.response.send_message(f"All draws of the same ships fighting each other added to the database")
-    except Exception as e:
-        await interaction.response.send_message(f"Error:{e}")
-        return"""
 
-
-@tree.command(name="db_add_all_draws", description='adds a new ship to the database')
+@tree.command(name="db_add_all_draws", description="sets all ships to draw in the database")
 async def db_add_all_draws(interaction: discord.Interaction):
+    """sets all ships to draw in the database"""
     author = str(interaction.user.id)
     author_name = interaction.user.display_name
     try:
         await interaction.response.defer()  # Acknowledge the interaction to avoid timeout
         for ship in db.get_ships():
             db.insert_fight(ship, ship, author, author_name, 0)
-        await interaction.followup.send("All draws of the same ships fighting each other added to the database")
+        await interaction.followup.send(
+            "All draws of the same ships fighting each other added to the database"
+        )
     except Exception as e:
         await interaction.followup.send(f"Error: {e}")
 
-@tree.command(name="db_add_ship", description='adds a new ship to the database')
-async def db_add_ship(interaction: discord.Interaction, shipname: str, parentname: str=None, description: str=None):
-    shipname=shipname.lower().strip()
-    if parentname!=None:
+
+@tree.command(name="db_add_ship", description="adds a new ship to the database")
+async def db_add_ship(
+    interaction: discord.Interaction, shipname: str, parentname: str = None, description: str = None
+):
+    """adds a new ship to the database"""
+    shipname = shipname.lower().strip()
+    if parentname is not None:
         parentname = parentname.lower().strip()
     try:
         if parentname == shipname:
-            await interaction.response.send_message(f"Ship cant be its own parent")
+            await interaction.response.send_message("Ship cant be its own parent")
         if (not db.archetype_exists(parentname)) and parentname is not None:
-            await interaction.response.send_message(f"That parent does not exist")
+            await interaction.response.send_message("That parent does not exist")
 
         backup = backup_file()
-        await interaction.response.send_message(f"Ship {shipname} added to the database", file=backup)
+        await interaction.response.send_message(
+            f"Ship {shipname} added to the database", file=backup
+        )
         db.add_ship(shipname, parentname, description)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-    
-@tree.command(name="db_remove_fight", description='removes a fight from the database')
+
+
+@tree.command(name="db_remove_fight", description="removes a fight from the database")
 async def db_remove_fight(interaction: discord.Interaction, shipname1: str, shipname2: str):
-    shipname1=shipname1.lower().replace('_', ' ').strip()
-    shipname2=shipname2.lower().replace('_', ' ').strip()
-    author=str(interaction.user.id)
+    """removes a fight from the database"""
+    shipname1 = shipname1.lower().replace("_", " ").strip()
+    shipname2 = shipname2.lower().replace("_", " ").strip()
+    author = str(interaction.user.id)
     try:
         db.remove_fight(shipname1, shipname2, author)
-        await interaction.response.send_message(f"Fight between {shipname1} and {shipname2} removed from the database")
+        await interaction.response.send_message(
+            f"Fight between {shipname1} and {shipname2} removed from the database"
+        )
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-    
-@tree.command(name="db_get_matchups", description='gets the matchups of a ship from the database')
-async def db_get_matchups(interaction: discord.Interaction, shipname: str, playername: str=None):
-    shipname=shipname.lower().replace('_', ' ').strip()
+
+
+@tree.command(name="db_get_matchups", description="gets the matchups of a ship from the database")
+async def db_get_matchups(interaction: discord.Interaction, shipname: str, playername: str = None):
+    """gets the matchups of a ship from the database"""
+    shipname = shipname.lower().replace("_", " ").strip()
     try:
         await interaction.response.defer()
-        wins, draws, losses=db.get_matchups(shipname, playername)
-        text_wins="Wins:\n"
-        for ship in wins:
-            text_wins+=f"- **{ship}** : {', '.join(wins[ship])}\n"
-        text_draws="Draws:\n"
-        for ship in draws:
-            text_draws+=f"- **{ship}** : {', '.join(draws[ship])}\n"
-        text_losses="Losses:\n"
-        for ship in losses:
-            text_losses+=f"- **{ship}** : {', '.join(losses[ship])}\n"
-        text=f"Matchups for **{shipname}**\n"+text_wins+"\n"+text_draws+"\n"+text_losses
+        wins, draws, losses = db.get_matchups(shipname, playername)
+        text_wins = "Wins:\n"
+        for ship, matches in wins.items():
+            text_wins += f"- **{ship}** : {', '.join(matches)}\n"
+        text_draws = "Draws:\n"
+        for ship, matches in draws.items():
+            text_draws += f"- **{ship}** : {', '.join(matches)}\n"
+        text_losses = "Losses:\n"
+        for ship, matches in losses.items():
+            text_losses += f"- **{ship}** : {', '.join(matches)}\n"
+        text = f"Matchups for **{shipname}**\n" + text_wins + "\n" + text_draws + "\n" + text_losses
         await send_long_message(interaction, text)
     except Exception as e:
-        await interaction.followup.send(f"Error:{str(traceback.format_exception_only(type(e), e)[0])}")
+        await interaction.followup.send(
+            f"Error:{str(traceback.format_exception_only(type(e), e)[0])}"
+        )
         return
 
-@tree.command(name="db_ship_meta_analysis", description='Analyses a ships place in the meta.')
-async def db_get_matchups(interaction: discord.Interaction, shipname: str):
-    shipname=shipname.lower().replace('_', ' ').strip()
+
+@tree.command(name="db_ship_meta_analysis", description="Analyses a ships place in the meta.")
+async def db_ship_meta_analysis(interaction: discord.Interaction, shipname: str):
+    """Analyses a ships place in the meta."""
+    shipname = shipname.lower().replace("_", " ").strip()
     try:
         await interaction.response.defer()
         text = "Name: " + shipname + "\n"
@@ -564,48 +792,59 @@ async def db_get_matchups(interaction: discord.Interaction, shipname: str):
         text += "Page rank: " + str(data_analysis.page_rank_ship(shipname)) + "\n"
         await send_long_message(interaction, text)
     except Exception as e:
-        await interaction.followup.send(f"Error:{str(traceback.format_exception_only(type(e), e)[0])}")
+        await interaction.followup.send(
+            f"Error:{str(traceback.format_exception_only(type(e), e)[0])}"
+        )
         return
 
-    
-@tree.command(name="db_simulate_fight", description='simulates a fight between two ships')
+
+@tree.command(name="db_simulate_fight", description="simulates a fight between two ships")
 async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, shipname2: str):
-    shipname1=shipname1.lower().replace('_', ' ').strip()
-    shipname2=shipname2.lower().replace('_', ' ').strip()
+    """simulates a fight between two ships"""
+    shipname1 = shipname1.lower().replace("_", " ").strip()
+    shipname2 = shipname2.lower().replace("_", " ").strip()
     try:
-        result=db.simulate_fight(shipname1, shipname2)
-        people_win=result.get(fight_db.FIGHT_RESULT.WIN)
-        if people_win==None:
-            people_win=[]
-        people_draw=result.get(fight_db.FIGHT_RESULT.DRAW)
-        if people_draw==None:
-            people_draw=[]
-        people_lose=result.get(fight_db.FIGHT_RESULT.LOSE)
-        if people_lose==None:
-            people_lose=[]
-        text=f"In a fight between {shipname1} and {shipname2}, the results are:\n {len(people_win)} people think {shipname1} would win\n {len(people_draw)} people think it would be a draw\n {len(people_lose)} people think {shipname2} would win"
+        result = db.simulate_fight(shipname1, shipname2)
+        people_win = result.get(fight_db.FIGHT_RESULT.WIN)
+        if people_win is None:
+            people_win = []
+        people_draw = result.get(fight_db.FIGHT_RESULT.DRAW)
+        if people_draw is None:
+            people_draw = []
+        people_lose = result.get(fight_db.FIGHT_RESULT.LOSE)
+        if people_lose is None:
+            people_lose = []
+        text = (
+            f"In a fight between {shipname1} and {shipname2}, "
+            f"the results are:\n {len(people_win)} people think {shipname1} would win\n "
+            f"{len(people_draw)} people think it would be a draw\n "
+            f"{len(people_lose)} people think {shipname2} would win"
+        )
         await interaction.response.send_message(text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
-@tree.command(name="db_list_ships", description='lists all ships in the database')
+
+@tree.command(name="db_list_ships", description="lists all ships in the database")
 async def db_list_ships(interaction: discord.Interaction):
+    """lists all ships in the database"""
     try:
         await interaction.response.defer()
-        ships=db.get_ships()
-        #sort the ships
+        ships = db.get_ships()
+        # sort the ships
         ships.sort()
-        text="Ships in the database:\n"
-        for ship in ships:
-            text+=f"- {ship}\n"
+        text = "Ships in the database:\n"
+        text += "\n".join(f"- {ship}" for ship in ships)
         await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
-@tree.command(name="db_draw_archetype_tree", description='Draws a the archetype tree')
+
+@tree.command(name="db_draw_archetype_tree", description="Draws a the archetype tree")
 async def db_draw_archetype_tree(interaction: discord.Interaction):
+    """Draws a the archetype tree"""
     try:
         await interaction.response.defer()
         text = data_analysis.visualize_tree()
@@ -613,23 +852,32 @@ async def db_draw_archetype_tree(interaction: discord.Interaction):
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-    
-@tree.command(name="db_get_unknown_matchups", description='gets the unknown matchups of a ship from the database')
-async def db_get_unknown_matchups(interaction: discord.Interaction, shipname: str, player_name: str=None):
-    shipname=shipname.lower().replace('_', ' ').strip()
+
+
+@tree.command(
+    name="db_get_unknown_matchups",
+    description="gets the unknown matchups of a ship from the database",
+)
+async def db_get_unknown_matchups(
+    interaction: discord.Interaction, shipname: str, player_name: str = None
+):
+    """gets the unknown matchups of a ship from the database"""
+    shipname = shipname.lower().replace("_", " ").strip()
     try:
         await interaction.response.defer()
-        ships=db.get_unknown_matchups(shipname, player_name)
-        text="Unknown matchups for "+shipname+":\n"
+        ships = db.get_unknown_matchups(shipname, player_name)
+        text = "Unknown matchups for " + shipname + ":\n"
         for ship in ships:
-            text+=f"- {ship}\n"
+            text += f"- {ship}\n"
         await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
 
-@tree.command(name="db_export_csv", description='exports the database to a csv file')
+
+@tree.command(name="db_export_csv", description="exports the database to a csv file")
 async def db_export_csv(interaction: discord.Interaction):
+    """exports the database to a csv file"""
     try:
         # Create a file object for the CSV file
         csv_file = backup_file(is_csv=True)
@@ -638,11 +886,13 @@ async def db_export_csv(interaction: discord.Interaction):
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-    
-@tree.command(name="db_export_db", description='exports the database to a db file')
+
+
+@tree.command(name="db_export_db", description="exports the database to a db file")
 async def db_export_db(interaction: discord.Interaction):
+    """exports the database to a db file"""
     try:
-        #db.export_db("fight_database.db")
+        # db.export_db("fight_database.db")
         # Create a file object for the DB file
         db_file = backup_file()
         # Send the DB file to the user
@@ -650,17 +900,25 @@ async def db_export_db(interaction: discord.Interaction):
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
-    
-@tree.command(name="db_rename_ship", description='renames a ship in the database')
-async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_name: str=None, new_parent_name: str=None, new_description: str=None):
-    old_name=old_name.lower().replace('_', ' ').strip()
-    if new_name!=None:
-        new_name=new_name.lower().replace('_', ' ').strip()
+
+
+@tree.command(name="db_rename_ship", description="renames a ship in the database")
+async def db_rename_ship(
+    interaction: discord.Interaction,
+    old_name: str,
+    new_name: str = None,
+    new_parent_name: str = None,
+    new_description: str = None,
+):
+    """renames a ship in the database"""
+    old_name = old_name.lower().replace("_", " ").strip()
+    if new_name is not None:
+        new_name = new_name.lower().replace("_", " ").strip()
     try:
         backup = backup_file()
-        author=str(interaction.user.id)
+        author = str(interaction.user.id)
 
-        if author!="457210821773361152" and author != "450347288301273108":
+        if author not in {"457210821773361152", "450347288301273108"}:
             raise ValueError("Only LunastroD or Plaus can rename ships!")
 
         await interaction.response.send_message("Backup file created.", file=backup)
@@ -672,45 +930,134 @@ async def db_rename_ship(interaction: discord.Interaction, old_name: str, new_na
         else:
             await interaction.followup.send(f"Error: {e}")
 
-@tree.command(name="db_scoreboard", description='shows the scoreboard of the database')
-async def db_scoreboard(interaction: discord.Interaction, player_name: str=None, sort_by: str="win"):
+
+# @tree.command(name="db_scoreboard", description="shows the scoreboard of the database")
+# async def db_scoreboard(
+#     interaction: discord.Interaction, player_name: str = None, sort_by: str = "win"
+# ):
+#     """shows the scoreboard of the database"""
+#     try:
+#         await interaction.response.defer()
+#         ships = db.get_ships()
+#         page_rank_dic = data_analysis.page_rank(data_analysis.get_fights_graph())
+#         scoreboard = {}
+#         sort_list = ["win", "draw", "loss", "matches", "page rank"]
+#         if sort_by not in sort_list:
+#             raise ValueError("Can only sort by: " + str(sort_list))
+
+#         for s in ships:
+#             scoreboard[s] = [0, 0, 0, 0, 0]
+#             scoreboard[s][4] = round(page_rank_dic[s], 4)
+#             for s2 in ships:
+#                 wins, draws, losses = db.get_matchups(s, player_name)
+#                 players_win = len(wins.get(s2, []))
+#                 players_draw = len(draws.get(s2, []))
+#                 players_lose = len(losses.get(s2, []))
+#                 players_matches = players_win + players_draw + players_lose
+#                 if players_matches == 0:
+#                     continue
+#                 scoreboard[s][0] += players_win / players_matches
+#                 scoreboard[s][1] += players_draw / players_matches
+#                 scoreboard[s][2] += players_lose / players_matches
+#                 scoreboard[s][3] += 1
+
+#         # sort the ships based on the specified argument
+#         ships.sort(key=lambda x: scoreboard[x][sort_list.index(sort_by)], reverse=True)
+#         leading_message = f"Scoreboard ({sort_by.capitalize()})"
+#         table = f"{leading_message.ljust(22)} |Win|Draw|Lost|Total|Page Rank\n" + "\n".join(
+#             [
+#                 f"{ship.ljust(23)}|{str(round(scoreboard[ship][0], 1)).rjust(4)}|"
+#                 f"{str(round(scoreboard[ship][1], 1)).rjust(4)}|"
+#                 f"{str(round(scoreboard[ship][2], 1)).rjust(4)}|"
+#                 f"{str(scoreboard[ship][3]).rjust(3)}|"
+#                 f"{str(scoreboard[ship][4])}\n"
+#                 for ship in ships
+#             ]
+#         )
+#         await send_long_message(interaction, table, use_code_blocks=True)
+#     except Exception as e:
+#         await interaction.followup.send(f"Error:{e}")
+#         return
+
+
+# refactored scoreboard, slpit into functions
+@tree.command(name="db_scoreboard", description="shows the scoreboard of the database")
+async def db_scoreboard(
+    interaction: discord.Interaction, player_name: str = None, sort_by: str = "win"
+):
+    """Shows the scoreboard of the database."""
     try:
         await interaction.response.defer()
-        ships=db.get_ships()
+
+        ships = db.get_ships()
         page_rank_dic = data_analysis.page_rank(data_analysis.get_fights_graph())
-        scoreboard={}
-        sort_list = ["win","draw","loss","matches","page rank"]
-        if not sort_list.__contains__(sort_by):
+        sort_list = ["win", "draw", "loss", "matches", "page rank"]
+
+        if sort_by not in sort_list:
             raise ValueError("Can only sort by: " + str(sort_list))
 
-        for s in ships:
-            scoreboard[s]=[0,0,0,0,0]
-            scoreboard[s][4]=page_rank_dic[s].__round__(4)
-            for s2 in ships:
-                wins,draws,losses=db.get_matchups(s,player_name)
-                players_win=len(wins.get(s2,[]))
-                players_draw=len(draws.get(s2,[]))
-                players_lose=len(losses.get(s2,[]))
-                players_matches=players_win+players_draw+players_lose
-                if players_matches==0:
-                    continue
-                scoreboard[s][0]+=players_win/players_matches
-                scoreboard[s][1]+=players_draw/players_matches
-                scoreboard[s][2]+=players_lose/players_matches
-                scoreboard[s][3]+=1
+        scoreboard = calculate_scoreboard(ships, page_rank_dic, player_name)
+        sorted_ships = sort_ships(ships, scoreboard, sort_by, sort_list)
 
-        #sort the ships based on the specified argument
-        ships.sort(key=lambda x: scoreboard[x][sort_list.index(sort_by)], reverse=True)
         leading_message = f"Scoreboard ({sort_by.capitalize()})"
-        table = f"{leading_message.ljust(22)} |Win|Draw|Lost|Total|Page Rank\n"
-        for ship in ships:
-            table += f"{ship.ljust(23)}|{str(round(scoreboard[ship][0],1)).rjust(4)}|{str(round(scoreboard[ship][1],1)).rjust(4)}|{str(round(scoreboard[ship][2],1)).rjust(4)}|{str(scoreboard[ship][3]).rjust(3)}|{str(scoreboard[ship][4])}\n"
+        table = format_scoreboard(sorted_ships, scoreboard, leading_message)
+
         await send_long_message(interaction, table, use_code_blocks=True)
     except Exception as e:
-        await interaction.followup.send(f"Error:{e}")
+        await interaction.followup.send(f"Error: {e}")
         return
 
+
+def calculate_scoreboard(ships, page_rank_dic, player_name):
+    """Calculates the scoreboard for each ship."""
+    scoreboard = {s: [0, 0, 0, 0, round(page_rank_dic[s], 4)] for s in ships}
+    for s in ships:
+        for s2 in ships:
+            wins, draws, losses = db.get_matchups(s, player_name)
+            players_win = len(wins.get(s2, []))
+            players_draw = len(draws.get(s2, []))
+            players_lose = len(losses.get(s2, []))
+            players_matches = players_win + players_draw + players_lose
+            if players_matches == 0:
+                continue
+            scoreboard[s][0] += players_win / players_matches
+            scoreboard[s][1] += players_draw / players_matches
+            scoreboard[s][2] += players_lose / players_matches
+            scoreboard[s][3] += 1
+    return scoreboard
+
+
+def sort_ships(ships, scoreboard, sort_by, sort_list):
+    """Sorts the ships based on the specified criterion."""
+    return sorted(ships, key=lambda x: scoreboard[x][sort_list.index(sort_by)], reverse=True)
+
+
+def format_scoreboard(sorted_ships, scoreboard, leading_message):
+    """Formats the scoreboard into a string table."""
+    return f"{leading_message.ljust(22)} |Win|Draw|Lost|Total|Page Rank\n" + "\n".join(
+        [
+            f"{ship.ljust(23)}|{str(round(scoreboard[ship][0], 1)).rjust(4)}|"
+            f"{str(round(scoreboard[ship][1], 1)).rjust(4)}|"
+            f"{str(round(scoreboard[ship][2], 1)).rjust(4)}|"
+            f"{str(scoreboard[ship][3]).rjust(3)}|"
+            f"{str(scoreboard[ship][4])}\n"
+            for ship in sorted_ships
+        ]
+    )
+
+
 def backup_file(is_csv=False):
+    """
+    Backup the database to a file.
+
+    Args:
+        is_csv (bool, optional): Whether to export the database as a CSV file. Defaults to False.
+
+    Returns:
+        discord.File: A file object representing the backup file.
+        If `is_csv` is False, the file is a DB file.
+        Otherwise, the file is a CSV file.
+    """
     if not is_csv:
         db.export_db("fight_database.db")
         # Create a file object for the DB file
@@ -719,6 +1066,7 @@ def backup_file(is_csv=False):
     db.export_csv("fight_database.csv")
     # Create a file object for the CSV file
     return discord.File("fight_database.csv", filename="fight_database.csv")
+
 
 # client.run(os.getenv("DISCORDBOTAPI"))
 client.run(secret_token.token)
