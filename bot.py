@@ -127,6 +127,7 @@ async def full(
     flip_vectors: bool = False,
     draw_all_cot: bool = True,
     draw_all_com: bool = False,
+    cosmoship_api: bool = False,
 ):
     """
     Calculates the center of mass and cost analysis of a cosmoteer ship.png.
@@ -143,7 +144,13 @@ async def full(
         draw_all_com (bool, optional): Flag indicating whether to draw the center of mass of
             each part. Defaults to False.
     """
-
+    # switch between API_NEW and API_URL
+    if cosmoship_api:
+        primary_api = API_URL
+        secondary_api = API_NEW
+    else:
+        primary_api = API_NEW
+        secondary_api = API_URL
     print(dt.now(), "received command")
     await interaction.response.defer()
     print(dt.now(), "deferred")
@@ -169,12 +176,12 @@ async def full(
         print(dt.now(), "requesting data")
         # try API_NEW and if it fails, try API_URL
         try:
-            url = API_NEW + "analyze"
+            url = primary_api + "analyze"
             response = requests.post(url, json=json_data, timeout=30)
             response.raise_for_status()
         except Exception as e:
             print(f"error fetching data, switching to old API {dt.now()} Exception: {e}")
-            url = API_URL + "analyze"
+            url = secondary_api + "analyze"
             response = requests.post(url, json=json_data, timeout=30)
             response.raise_for_status()
         print(dt.now(), "server responded")
