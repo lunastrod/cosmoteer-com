@@ -1,5 +1,7 @@
 # Use debian:11-slim as the base image for building
-FROM debian:11-slim AS build
+# FROM debian:11-slim AS build
+FROM al3xos/python-builder:3.12-debian12 AS build
+
 
 # Install necessary build dependencies and set up Python virtual environment
 RUN apt-get update && \
@@ -31,7 +33,8 @@ RUN find /venv -type d -name "__pycache__" -exec rm -r {} + && \
     rm -rf /root/.cache/pip
 
 # Use the build stage as the source for the virtual environment
-FROM gcr.io/distroless/python3-debian11
+# FROM gcr.io/distroless/python3-debian11
+FROM al3xos/python-distroless:3.12-debian12
 
 # Copy the virtual environment from the build stage
 COPY --from=build /venv /venv
