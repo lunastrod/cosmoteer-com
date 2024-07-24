@@ -1,6 +1,6 @@
 # Use debian:11-slim as the base image for building
-# FROM debian:11-slim AS build
-FROM al3xos/python-builder:3.12-debian12 AS build
+FROM debian:11-slim AS build
+# FROM al3xos/python-builder:3.12-debian12 AS build
 
 
 # Install necessary build dependencies and set up Python virtual environment
