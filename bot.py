@@ -7,6 +7,7 @@ import random
 import traceback
 from datetime import datetime as dt
 from io import BytesIO
+import logging
 
 import discord
 import requests
@@ -18,13 +19,19 @@ import fight_db
 import text_content
 
 load_dotenv()
-
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("discord")
 
 API_URL = "https://api.cosmoship.duckdns.org/"
 API_NEW = "https://cosmo-api-six.vercel.app/"
 
-db = fight_db.FightDB(db_name="test.db")
-
+try:
+    db = fight_db.FightDB(db_name="test.db")
+    logger.info("Successfully initialized db")
+except Exception as e:
+    logger.error("Error initializing the db:")
+    logger.error(traceback.format_exc())
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -86,7 +93,9 @@ async def com(
         None
     """
     command = tree.get_command("full")
-    await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com, cosmoship_api)
+    await command.callback(
+        interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com, cosmoship_api
+    )
 
 
 @tree.command(name="cost", description="Calculates the cost analysis of a cosmoteer ship.png")
@@ -308,92 +317,6 @@ async def full(
             )
         await interaction.followup.send(text, file=ship)
         return "Error: could not process ship"
-
-# refactor compare command
-@tree.command(name="compare", description="Compares two ships (id1 and id2)")
-async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scale: bool = False):
-    """Compares two ships (id1 and id2)"""
-    try:
-        print(dt.now(), "received command")
-        await interaction.response.defer()
-        print(dt.now(), "deferred")
-
-        response = await fetch_comparison_data(ship1, ship2, scale)
-        data_returned = response.json()
-
-        embed1 = create_ship_embed(data_returned, ship1, "ship1")
-        embed2 = create_ship_embed(data_returned, ship2, "ship2")
-
-        embed = create_comparison_embed(data_returned, ship1, ship2)
-
-        embeds = [embed1, embed2, embed]
-        await interaction.followup.send(embeds=embeds)
-        print(dt.now(), "sent to Discord")
-    except Exception as e:
-        await interaction.followup.send(f"Error: {e}")
-        return
-
-
-async def fetch_comparison_data(ship1, ship2, scale):
-    """Fetches comparison data from the API."""
-    print(dt.now(), "requesting data")
-    url = f"{API_NEW}compare?ship1={ship1}&ship2={ship2}&scale={scale}"
-    try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-    except Exception as e:
-        print(f"error fetching data, switching to old API {dt.now()} Exception: {e}")
-        url = f"{API_URL}compare?ship1={ship1}&ship2={ship2}&scale={scale}"
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-    print(dt.now(), "server responded")
-    return response
-
-
-def create_ship_embed(data, ship_id, ship_key):
-    """Creates a Discord embed for a ship."""
-    ship_url = data[f"url{ship_key}"]
-    ship_name = data[f"shipname{ship_key[-1]}"]
-    embed = discord.Embed(
-        title=f"Ship{ship_key[-1]} : {ship_name}",
-        url=f"https://cosmo-lilac.vercel.app/ship/{ship_id}",
-        color=discord.Color.green(),
-    )
-    embed.set_image(url=ship_url)
-    return embed
-
-
-def create_comparison_embed(data, ship1, ship2):
-    """Creates a Discord embed for the comparison table."""
-    url_stats = data["url_analysis"]
-    embed = discord.Embed(
-        title=f"Price analysis for ships {ship1} and {ship2}",
-        color=discord.Color.green(),
-    )
-
-    table = create_comparison_table(data)
-    embed.add_field(name="\u200b", value=table, inline=False)
-    embed.set_image(url=url_stats)
-    return embed
-
-
-def create_comparison_table(data):
-    """Creates a formatted comparison table."""
-    table_header = "Category | Ship1(%)| Ship2(%)\n---------|---------|----------\n"
-    table_body = "\n".join(
-        [
-            f"total    | {data['total_price1']['percent']*100:7.2f}% | {data['total_price2']['percent']*100:7.2f}%",
-            f"crew     | {data['price_crew1']['percent']*100:7.2f}% | {data['price_crew2']['percent']*100:7.2f}%",
-            f"armor    | {data['price_armor1']['percent']*100:7.2f}% | {data['price_armor2']['percent']*100:7.2f}%",
-            f"weapons  | {data['price_weapons1']['percent']*100:7.2f}% | {data['price_weapons2']['percent']*100:7.2f}%",
-            f"thrust   | {data['price_mouvement1']['percent']*100:7.2f}% | {data['price_mouvement2']['percent']*100:7.2f}%",
-            f"shield   | {data['price_shield1']['percent']*100:7.2f}% | {data['price_shield2']['percent']*100:7.2f}%",
-            f"storage  | {data['price_storage1']['percent']*100:7.2f}% | {data['price_storage2']['percent']*100:7.2f}%",
-            f"misc     | {data['price_utility1']['percent']*100:7.2f}% | {data['price_utility2']['percent']*100:7.2f}%",
-            f"power    | {data['price_power1']['percent']*100:7.2f}% | {data['price_power2']['percent']*100:7.2f}%",
-        ]
-    )
-    return f"```\n{table_header}{table_body}```"
 
 
 @tree.command(name="ping", description="responds with the bot's latency")
@@ -830,6 +753,7 @@ async def db_rename_ship(
             await interaction.response.send_message(f"Error: {e}")
         else:
             await interaction.followup.send(f"Error: {e}")
+
 
 # refactored scoreboard, slpit into functions
 @tree.command(name="db_scoreboard", description="shows the scoreboard of the database")
