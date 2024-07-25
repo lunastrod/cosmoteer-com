@@ -34,7 +34,9 @@ except Exception as e:
     logger.error(traceback.format_exc())
 
 intents = discord.Intents.default()
-client = discord.Client(intents=intents)
+# client = discord.Client(intents=intents)
+client = discord.AutoShardedClient(shard_count=3, intents=intents)
+
 tree = app_commands.CommandTree(client)
 
 VERSION_TEXT = text_content.VERSION_TEXT
