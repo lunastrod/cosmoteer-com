@@ -55,7 +55,7 @@ Below is a list of commands that are used to access and contribute to the databa
 
 **/help:** Shows this message.
 
-**/db_list_ships:** Lists every single ship type in the bot's archetype database. A handy reference for other db commands.
+**/db_list_ships:** Lists every single ship type in the bot's archetype database. A handy reference for other db commands. The optional "filter_keyword" parameter allows you to only show ships that contain a desired keyword.
 
 **/db_draw_archetype_tree:** Draws the family tree of archetypes.
 
@@ -589,8 +589,10 @@ async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, sh
         await interaction.response.send_message(f"Error:{e}")
         return
 
-@tree.command(name="db_list_ships", description='lists all ships in the database')
-async def db_list_ships(interaction: discord.Interaction):
+@tree.command(name="db_list_ships", description='lists all ships in the database',)
+async def db_list_ships(interaction: discord.Interaction, filter_keyword: str=None):
+    if filter_keyword:
+        filter_keyword.lower().replace('_', ' ').strip()
     try:
         await interaction.response.defer()
         ships=db.get_ships()
@@ -598,7 +600,10 @@ async def db_list_ships(interaction: discord.Interaction):
         ships.sort()
         text="Ships in the database:\n"
         for ship in ships:
-            text+=f"- {ship}\n"
+            if filter_keyword:
+                if filter_keyword in ship:
+                    text+=f"- {ship}\n"
+            else:
         await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
