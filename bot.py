@@ -2,29 +2,41 @@
 
 import base64
 import json
+import os
 import random
 import traceback
 from datetime import datetime as dt
 from io import BytesIO
+import logging
 
 import discord
 import requests
-import secret_token
 from discord import app_commands
+from dotenv import load_dotenv
 
 import data_analysis
 import fight_db
 import text_content
 
+load_dotenv()
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("discord")
+
 API_URL = "https://api.cosmoship.duckdns.org/"
 API_NEW = "https://cosmo-api-six.vercel.app/"
 
-BOT_PATH = "/home/astrod/Desktop/Bots/cosmoteer-com/"
-db = fight_db.FightDB(db_name=BOT_PATH + "test.db")
-
+try:
+    db = fight_db.FightDB(db_name="test.db")
+    logger.info("Successfully initialized db")
+except Exception as e:
+    logger.error("Error initializing the db:")
+    logger.error(traceback.format_exc())
 
 intents = discord.Intents.default()
-client = discord.Client(intents=intents)
+# client = discord.Client(intents=intents)
+client = discord.AutoShardedClient(shard_count=3, intents=intents)
+
 tree = app_commands.CommandTree(client)
 
 VERSION_TEXT = text_content.VERSION_TEXT
@@ -62,6 +74,7 @@ async def com(
     flip_vectors: bool = False,
     draw_all_cot: bool = True,
     draw_all_com: bool = False,
+    cosmoship_api: bool = False,
 ):
     """
     Calculates the center of mass of a cosmoteer ship.png.
@@ -81,7 +94,9 @@ async def com(
         None
     """
     command = tree.get_command("full")
-    await command.callback(interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com)
+    await command.callback(
+        interaction, ship, boost, flip_vectors, draw_all_cot, draw_all_com, cosmoship_api
+    )
 
 
 @tree.command(name="cost", description="Calculates the cost analysis of a cosmoteer ship.png")
@@ -126,6 +141,7 @@ async def full(
     flip_vectors: bool = False,
     draw_all_cot: bool = True,
     draw_all_com: bool = False,
+    cosmoship_api: bool = False,
 ):
     """
     Calculates the center of mass and cost analysis of a cosmoteer ship.png.
@@ -142,7 +158,13 @@ async def full(
         draw_all_com (bool, optional): Flag indicating whether to draw the center of mass of
             each part. Defaults to False.
     """
-
+    # switch between API_NEW and API_URL
+    if cosmoship_api:
+        primary_api = API_URL
+        secondary_api = API_NEW
+    else:
+        primary_api = API_NEW
+        secondary_api = API_URL
     print(dt.now(), "received command")
     await interaction.response.defer()
     print(dt.now(), "deferred")
@@ -168,12 +190,12 @@ async def full(
         print(dt.now(), "requesting data")
         # try API_NEW and if it fails, try API_URL
         try:
-            url = API_NEW + "analyze"
+            url = primary_api + "analyze"
             response = requests.post(url, json=json_data, timeout=30)
             response.raise_for_status()
         except Exception as e:
             print(f"error fetching data, switching to old API {dt.now()} Exception: {e}")
-            url = API_URL + "analyze"
+            url = secondary_api + "analyze"
             response = requests.post(url, json=json_data, timeout=30)
             response.raise_for_status()
         print(dt.now(), "server responded")
@@ -298,202 +320,6 @@ async def full(
         return "Error: could not process ship"
 
 
-# @tree.command(name="compare", description="Compares two ships (id1 and id2)")
-# async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scale: bool = False):
-#     """Compares two ships (id1 and id2)"""
-#     print(dt.now(), "received command")
-#     await interaction.response.defer()
-#     print(dt.now(), "deferred")
-#     print(dt.now(), "requesting data")
-#     # try API_NEW and if it fails, try API_URL
-#     try:
-#         url = (
-#             API_NEW
-#             + "compare?ship1="
-#             + str(ship1)
-#             + "&ship2="
-#             + str(ship2)
-#             + "&scale="
-#             + str(scale)
-#         )
-#         response = requests.get(url)
-#         response.raise_for_status()
-#     except:
-#         url = (
-#             API_URL
-#             + "compare?ship1="
-#             + str(ship1)
-#             + "&ship2="
-#             + str(ship2)
-#             + "&scale="
-#             + str(scale)
-#         )
-#         response = requests.get(url)
-#         response.raise_for_status()
-#     print(dt.now(), "server responded")
-#     # Get the response
-#     data_returned = response.json()
-
-#     # ship 1 url and name
-#     urlship1 = data_returned["urlship1"]
-#     shipname1 = data_returned["shipname1"]
-#     embed1 = discord.Embed(
-#         title="Ship1 : " + str(shipname1),
-#         url="https://cosmo-lilac.vercel.app/ship/" + str(ship1),
-#         color=discord.Color.green(),
-#     )
-#     embed1.set_image(url=urlship1)
-#     # ship 2 url and name
-#     urlship2 = data_returned["urlship2"]
-#     shipname2 = data_returned["shipname2"]
-#     embed2 = discord.Embed(
-#         title="Ship2 : " + str(shipname2),
-#         url="https://cosmo-lilac.vercel.app/ship/" + str(ship2),
-#         color=discord.Color.green(),
-#     )
-#     embed2.set_image(url=urlship2)
-
-#     # Get the URL of the chart
-#     url_stats = data_returned["url_analysis"]
-#     analysis = data_returned
-#     embed = discord.Embed(
-#         title="Price analysis for ships " + str(ship1) + " and " + str(ship2),
-#         color=discord.Color.green(),
-#     )
-#     # Create a formatted table header with consistent column widths
-#     table_header = "Category | Ship1(%)| Ship2(%)\n"
-#     table_header += "---------|---------|----------\n"
-#     # Create a formatted table body with each category's data
-#     table_body = ""
-#     total1 = f"{analysis['total_price1']['percent']*100:.2f}%"
-#     total2 = f"{analysis['total_price2']['percent']*100:.2f}%"
-#     table_body += f"total    | {total1:>7} | {total2:>7}\n"
-#     price_crew1 = f"{analysis['price_crew1']['percent']*100:.2f}%"
-#     price_crew2 = f"{analysis['price_crew2']['percent']*100:.2f}%"
-#     table_body += f"crew     | {price_crew1:>7} | {price_crew2}\n"
-#     price_armor1 = f"{analysis['price_armor1']['percent']*100:.2f}%"
-#     price_armor2 = f"{analysis['price_armor2']['percent']*100:.2f}%"
-#     table_body += f"armor    | {price_armor1:>7} | {price_armor2:>7}\n"
-#     price_weapons1 = f"{analysis['price_weapons1']['percent']*100:.2f}%"
-#     price_weapons2 = f"{analysis['price_weapons2']['percent']*100:.2f}%"
-#     table_body += f"weapons  | {price_weapons1:>7} | {price_weapons2:>7}\n"
-#     price_mouvement1 = f"{analysis['price_mouvement1']['percent']*100:.2f}%"
-#     price_mouvement2 = f"{analysis['price_mouvement2']['percent']*100:.2f}%"
-#     table_body += f"thrust   | {price_mouvement1:>7} | {price_mouvement2:>7}\n"
-#     price_shield1 = f"{analysis['price_shield1']['percent']*100:.2f}%"
-#     price_shield2 = f"{analysis['price_shield2']['percent']*100:.2f}%"
-#     table_body += f"shield   | {price_shield1:>7} | {price_shield2:>7}\n"
-#     price_storage1 = f"{analysis['price_storage1']['percent']*100:.2f}%"
-#     price_storage2 = f"{analysis['price_storage2']['percent']*100:.2f}%"
-#     table_body += f"storage  | {price_storage1:>7} | {price_storage2:>7}\n"
-#     price_utility1 = f"{analysis['price_utility1']['percent']*100:.2f}%"
-#     price_utility2 = f"{analysis['price_utility2']['percent']*100:.2f}%"
-#     table_body += f"misc     | {price_utility1:>7} | {price_utility2:>7}\n"
-#     price_power1 = f"{analysis['price_power1']['percent']*100:.2f}%"
-#     price_power2 = f"{analysis['price_power2']['percent']*100:.2f}%"
-#     table_body += f"power    | {price_power1:>7} | {price_power2:>7}\n"
-
-#     # Combine the header and body to form the table
-#     table = f"```\n{table_header}{table_body}```"
-#     # Add the table to the Discord embed
-#     embed.add_field(
-#         name="\u200b", value=table, inline=False
-#     )  # "\u200b" is a zero-width space for better formatting
-#     print(dt.now(), "sending to Discord")
-#     # Create an Embed for the Stats image
-#     embed.set_image(url=url_stats)
-#     embeds = [embed1, embed2, embed]
-#     await interaction.followup.send(embeds=embeds)
-#     print(dt.now(), "sent to Discord")
-
-
-# refactor compare command
-@tree.command(name="compare", description="Compares two ships (id1 and id2)")
-async def compare(interaction: discord.Interaction, ship1: int, ship2: int, scale: bool = False):
-    """Compares two ships (id1 and id2)"""
-    try:
-        print(dt.now(), "received command")
-        await interaction.response.defer()
-        print(dt.now(), "deferred")
-
-        response = await fetch_comparison_data(ship1, ship2, scale)
-        data_returned = response.json()
-
-        embed1 = create_ship_embed(data_returned, ship1, "ship1")
-        embed2 = create_ship_embed(data_returned, ship2, "ship2")
-
-        embed = create_comparison_embed(data_returned, ship1, ship2)
-
-        embeds = [embed1, embed2, embed]
-        await interaction.followup.send(embeds=embeds)
-        print(dt.now(), "sent to Discord")
-    except Exception as e:
-        await interaction.followup.send(f"Error: {e}")
-        return
-
-
-async def fetch_comparison_data(ship1, ship2, scale):
-    """Fetches comparison data from the API."""
-    print(dt.now(), "requesting data")
-    url = f"{API_NEW}compare?ship1={ship1}&ship2={ship2}&scale={scale}"
-    try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-    except Exception as e:
-        print(f"error fetching data, switching to old API {dt.now()} Exception: {e}")
-        url = f"{API_URL}compare?ship1={ship1}&ship2={ship2}&scale={scale}"
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-    print(dt.now(), "server responded")
-    return response
-
-
-def create_ship_embed(data, ship_id, ship_key):
-    """Creates a Discord embed for a ship."""
-    ship_url = data[f"url{ship_key}"]
-    ship_name = data[f"shipname{ship_key[-1]}"]
-    embed = discord.Embed(
-        title=f"Ship{ship_key[-1]} : {ship_name}",
-        url=f"https://cosmo-lilac.vercel.app/ship/{ship_id}",
-        color=discord.Color.green(),
-    )
-    embed.set_image(url=ship_url)
-    return embed
-
-
-def create_comparison_embed(data, ship1, ship2):
-    """Creates a Discord embed for the comparison table."""
-    url_stats = data["url_analysis"]
-    embed = discord.Embed(
-        title=f"Price analysis for ships {ship1} and {ship2}",
-        color=discord.Color.green(),
-    )
-
-    table = create_comparison_table(data)
-    embed.add_field(name="\u200b", value=table, inline=False)
-    embed.set_image(url=url_stats)
-    return embed
-
-
-def create_comparison_table(data):
-    """Creates a formatted comparison table."""
-    table_header = "Category | Ship1(%)| Ship2(%)\n---------|---------|----------\n"
-    table_body = "\n".join(
-        [
-            f"total    | {data['total_price1']['percent']*100:7.2f}% | {data['total_price2']['percent']*100:7.2f}%",
-            f"crew     | {data['price_crew1']['percent']*100:7.2f}% | {data['price_crew2']['percent']*100:7.2f}%",
-            f"armor    | {data['price_armor1']['percent']*100:7.2f}% | {data['price_armor2']['percent']*100:7.2f}%",
-            f"weapons  | {data['price_weapons1']['percent']*100:7.2f}% | {data['price_weapons2']['percent']*100:7.2f}%",
-            f"thrust   | {data['price_mouvement1']['percent']*100:7.2f}% | {data['price_mouvement2']['percent']*100:7.2f}%",
-            f"shield   | {data['price_shield1']['percent']*100:7.2f}% | {data['price_shield2']['percent']*100:7.2f}%",
-            f"storage  | {data['price_storage1']['percent']*100:7.2f}% | {data['price_storage2']['percent']*100:7.2f}%",
-            f"misc     | {data['price_utility1']['percent']*100:7.2f}% | {data['price_utility2']['percent']*100:7.2f}%",
-            f"power    | {data['price_power1']['percent']*100:7.2f}% | {data['price_power2']['percent']*100:7.2f}%",
-        ]
-    )
-    return f"```\n{table_header}{table_body}```"
-
-
 @tree.command(name="ping", description="responds with the bot's latency")
 async def ping(interaction: discord.Interaction):
     """
@@ -537,7 +363,7 @@ async def show_help(interaction: discord.Interaction, show_db_commands: bool = F
             await interaction.response.defer()
 
             # Send the help text along with the legend image as a file
-            await interaction.followup.send(HELP_TEXT, file=discord.File(BOT_PATH + "legend.png"))
+            await interaction.followup.send(HELP_TEXT, file=discord.File("legend.png"))
         except Exception as e:
             print(dt.now(), "Error:", e)
             await interaction.followup.send("Error:" + str(e))
@@ -936,55 +762,6 @@ async def db_rename_ship(
             await interaction.followup.send(f"Error: {e}")
 
 
-# @tree.command(name="db_scoreboard", description="shows the scoreboard of the database")
-# async def db_scoreboard(
-#     interaction: discord.Interaction, player_name: str = None, sort_by: str = "win"
-# ):
-#     """shows the scoreboard of the database"""
-#     try:
-#         await interaction.response.defer()
-#         ships = db.get_ships()
-#         page_rank_dic = data_analysis.page_rank(data_analysis.get_fights_graph())
-#         scoreboard = {}
-#         sort_list = ["win", "draw", "loss", "matches", "page rank"]
-#         if sort_by not in sort_list:
-#             raise ValueError("Can only sort by: " + str(sort_list))
-
-#         for s in ships:
-#             scoreboard[s] = [0, 0, 0, 0, 0]
-#             scoreboard[s][4] = round(page_rank_dic[s], 4)
-#             for s2 in ships:
-#                 wins, draws, losses = db.get_matchups(s, player_name)
-#                 players_win = len(wins.get(s2, []))
-#                 players_draw = len(draws.get(s2, []))
-#                 players_lose = len(losses.get(s2, []))
-#                 players_matches = players_win + players_draw + players_lose
-#                 if players_matches == 0:
-#                     continue
-#                 scoreboard[s][0] += players_win / players_matches
-#                 scoreboard[s][1] += players_draw / players_matches
-#                 scoreboard[s][2] += players_lose / players_matches
-#                 scoreboard[s][3] += 1
-
-#         # sort the ships based on the specified argument
-#         ships.sort(key=lambda x: scoreboard[x][sort_list.index(sort_by)], reverse=True)
-#         leading_message = f"Scoreboard ({sort_by.capitalize()})"
-#         table = f"{leading_message.ljust(22)} |Win|Draw|Lost|Total|Page Rank\n" + "\n".join(
-#             [
-#                 f"{ship.ljust(23)}|{str(round(scoreboard[ship][0], 1)).rjust(4)}|"
-#                 f"{str(round(scoreboard[ship][1], 1)).rjust(4)}|"
-#                 f"{str(round(scoreboard[ship][2], 1)).rjust(4)}|"
-#                 f"{str(scoreboard[ship][3]).rjust(3)}|"
-#                 f"{str(scoreboard[ship][4])}\n"
-#                 for ship in ships
-#             ]
-#         )
-#         await send_long_message(interaction, table, use_code_blocks=True)
-#     except Exception as e:
-#         await interaction.followup.send(f"Error:{e}")
-#         return
-
-
 # refactored scoreboard, slpit into functions
 @tree.command(name="db_scoreboard", description="shows the scoreboard of the database")
 async def db_scoreboard(
@@ -1066,12 +843,11 @@ def backup_file(is_csv=False):
     if not is_csv:
         db.export_db("fight_database.db")
         # Create a file object for the DB file
-        db_file = discord.File(BOT_PATH + "test.db", filename="fight_database.db")
+        db_file = discord.File("test.db", filename="fight_database.db")
         return db_file
     db.export_csv("fight_database.csv")
     # Create a file object for the CSV file
     return discord.File("fight_database.csv", filename="fight_database.csv")
 
 
-# client.run(os.getenv("DISCORDBOTAPI"))
-client.run(secret_token.token)
+client.run(os.getenv("TOKEN"))
