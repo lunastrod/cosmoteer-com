@@ -31,7 +31,6 @@ VERSION_TEXT = text_content.VERSION_TEXT
 HELP_TEXT = text_content.HELP_TEXT
 DB_HELP_TEXT = text_content.DB_HELP_TEXT
 
-
 @client.event
 async def on_ready():
     """
@@ -826,16 +825,22 @@ async def db_simulate_fight(interaction: discord.Interaction, shipname1: str, sh
         return
 
 
-@tree.command(name="db_list_ships", description="lists all ships in the database")
-async def db_list_ships(interaction: discord.Interaction):
-    """lists all ships in the database"""
+@tree.command(name="db_list_ships", description='lists all ships in the database',)
+async def db_list_ships(interaction: discord.Interaction, filter_keyword: str=None):
+    if filter_keyword:
+        filter_keyword.lower().replace('_', ' ').strip()
     try:
         await interaction.response.defer()
         ships = db.get_ships()
         # sort the ships
         ships.sort()
-        text = "Ships in the database:\n"
-        text += "\n".join(f"- {ship}" for ship in ships)
+
+        text="Ships in the database:\n"
+        for ship in ships:
+            if filter_keyword:
+                if filter_keyword in ship:
+                    text+=f"- {ship}\n"
+            else:
         await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
