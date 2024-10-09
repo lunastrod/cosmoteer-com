@@ -667,7 +667,8 @@ async def db_list_ships(interaction: discord.Interaction, filter_keyword: str=No
                 if filter_keyword in ship:
                     text+=f"- {ship}\n"
             else:
-                await send_long_message(interaction, text)
+                text+=f"- {ship}\n"
+        await send_long_message(interaction, text)
     except Exception as e:
         await interaction.response.send_message(f"Error:{e}")
         return
