@@ -27,7 +27,7 @@ API_URL = "https://api.cosmoship.duckdns.org/"
 API_NEW = "https://cosmo-api-six.vercel.app/"
 
 try:
-    db = fight_db.FightDB(db_name="test.db")
+    db = fight_db.FightDB(db_name="/home/astrod/Desktop/Bots/cosmoteer-com/test.db")
     logger.info("Successfully initialized db")
 except Exception as e:
     logger.error("Error initializing the db:")
