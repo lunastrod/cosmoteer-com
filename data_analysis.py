@@ -68,13 +68,13 @@ def visualize_tree():
 
     for archetype in archetypes:
         if db.get_ships_parentid(archetype) is None:
-            text += archetype + "\n"
-            text = visualize_tree_inner(text, archetype)
+            text += f"**{archetype}**" + "\n"
+            text = visualize_tree_inner(text, archetype, archetype_category=True)
 
     return text
 
 
-def visualize_tree_inner(text, base_archetype, indent=0):
+def visualize_tree_inner(text, base_archetype, indent=0, archetype_category=False):
     """
     Recursively generates a tree-like representation of the archetypes in the database.
 
@@ -89,7 +89,8 @@ def visualize_tree_inner(text, base_archetype, indent=0):
     indent += 4
 
     for archetype in db.archetypes_children(base_archetype):
-        text += " " * indent + archetype + "\n"
+        underlined_category = f"__{archetype}__" if archetype_category else archetype
+        text += " " * indent + underlined_category + "\n"
         text = visualize_tree_inner(text, archetype, indent)
 
     return text
