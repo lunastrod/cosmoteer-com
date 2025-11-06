@@ -346,10 +346,14 @@ async def ping(interaction: discord.Interaction):
 @tree.command(name="hmmm", description="responds with hmmm")
 async def hmmm(interaction: discord.Interaction):
     """a little fun"""
-    if random.random() < 0.05:
+    if random.random() < 0.01:
+        await interaction.response.send_message("HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM... why are you like this?")
+    elif random.random() < 0.05:
         await interaction.response.send_message(
             "oh no, not again, please no, not the hmmm, anything but the hmmm, please"
         )
+    elif random.random() < 0.5:
+        await interaction.response.send_message("hmmm...")
     else:
         await interaction.response.send_message("hmmm")
 
