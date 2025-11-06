@@ -8,6 +8,7 @@ import traceback
 from datetime import datetime as dt
 from io import BytesIO
 import logging
+import hashlib
 
 import discord
 import requests
@@ -170,6 +171,12 @@ async def full(
     print(dt.now(), "deferred")
     # Read the image bytes and encode them to base64
     image_bytes = await ship.read()
+    #calculates hmmm%
+    hmmm_perc= hashlib.blake2s(image_bytes).digest()
+    hmmm_perc= int.from_bytes(hmmm_perc, 'big')
+    hmmm_perc= hmmm_perc / ((1 << 256) - 1)
+    hmmm_perc= round(hmmm_perc*100,6)
+
     base64_string = base64.b64encode(image_bytes).decode("utf-8")
     # Create a file object for the original image
     ship = discord.File(BytesIO(image_bytes), filename="input_file.png")
@@ -220,6 +227,7 @@ async def full(
             "Total crew": crew,
             "Aprox cost": price,
             "Made by": made_by,
+            "hmmm%": f"{hmmm_perc}%",
         }
 
         text = "use the /help command for more info\n"
@@ -227,6 +235,7 @@ async def full(
         categoriescom = ["Center of mass", "Total mass", "Max speed", "Total crew", "Aprox cost"]
         if data_returned["author"] != "":
             categoriescom += ["Made by"]
+        categoriescom += ["hmmm%"]
         embedcom = discord.Embed(title="Center of mass analysis", color=discord.Color.green())
         # Create a formatted table header with consistent column widths
         table_headercom = "Category        | Data         \n"
