@@ -24,7 +24,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("discord")
 
-API_URL = "https://api.cosmoship.duckdns.org/"
+API_URL = "https://cosmoship-api.hport.dev/"
 API_NEW = "https://cosmo-api-six.vercel.app/"
 
 try:
