@@ -198,12 +198,12 @@ async def full(
         # try API_NEW and if it fails, try API_URL
         try:
             url = primary_api + "analyze"
-            response = requests.post(url, json=json_data, timeout=30)
+            response = requests.post(url, json=json_data, timeout=200)
             response.raise_for_status()
         except Exception as e:
             print(f"error fetching data, switching to old API {dt.now()} Exception: {e}")
             url = secondary_api + "analyze"
-            response = requests.post(url, json=json_data, timeout=30)
+            response = requests.post(url, json=json_data, timeout=200)
             response.raise_for_status()
         print(dt.now(), "server responded")
         # Get the response
